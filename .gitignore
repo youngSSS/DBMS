@@ -1,0 +1,9 @@
+.vscode
+.idea
+cmake-build-debug
+DATA*
+LogFile.db
+LogMessageFile.txt
+LSN_FILE
+
+*.o

@@ -1,5 +1,5 @@
-#include "lock_manager.h"
-#include "transaction_manager.h"
+#include "lock.h"
+#include "transaction.h"
 
 unordered_map< int, unordered_map< int64_t, lock_table_entry * > > Lock_Table;
 pthread_mutex_t Lock_Latch;
@@ -23,24 +23,7 @@ int detect_deadlock(int trx_id, lock_t * lock_obj) {
     release_trx_table_latch();
 
     for (iter = is_visit.begin(); iter != is_visit.end(); iter++) {
-        if (iter->first == trx_id) {
-
-//            printf("Table id : %d, key : %d, trx_id(%d)\n",
-//            lock_obj->sentinel->table_id, lock_obj->sentinel->key, lock_obj->trx_id);
-//
-//            print_lock_table();
-//            printf("Wait For List : ");
-//
-//            if (is_visit.size() == 0)  {
-//                printf("None");
-//            }
-//            for (iter = is_visit.begin(); iter != is_visit.end(); iter++) {
-//                printf("%d, ", iter->first);
-//            }
-//            printf("\n");
-
-            return 1;
-        }
+        if (iter->first == trx_id) return 1;
     }
 
     return 0;
@@ -51,10 +34,8 @@ int lock_list_existence_check(int table_id, int64_t key) {
     if (Lock_Table[table_id].find(key) == Lock_Table[table_id].end())
         return 0;
     else {
-        if (Lock_Table[table_id][key] == NULL)
-            return 0;
-        else
-            return 1;
+        if (Lock_Table[table_id][key] == NULL) return 0;
+        else return 1;
     }
 }
 
@@ -67,10 +48,8 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t **
 	lock_t * lock_obj, * working_lock_obj, * target_lock_obj;
 	int trx_exist_flag = 0;
 
-
 	/* Case 1 : Nothing in lock list */
 	if (lock_list_existence_check(table_id, key) == 0) {
-
 	    // Make lock table entry
 	    table_entry = (lock_table_entry*)malloc(sizeof(lock_table_entry));
         if (table_entry == NULL) {
@@ -115,20 +94,21 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t **
         pthread_mutex_unlock(&Lock_Latch);
 
         return 0;
-
 	}
 
 	/* Case 2 : Something in lock list */
 	else {
-
 	    // Check whether my TRX exists in lock list
 	    working_lock_obj = Lock_Table[table_id][key]->head;
+        
 	    while (working_lock_obj->is_waiting == 0) {
             if (working_lock_obj->trx_id == trx_id) {
                 trx_exist_flag = 1;
                 break;
             }
+
             working_lock_obj = working_lock_obj->next;
+
             if (working_lock_obj == NULL) break;
 	    }
 
@@ -243,19 +223,9 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t **
             }
 
             /* Case 2-1-2 : working_lock_obj is waiting lock */
-            else {
-                // This case should never happen
-                printf(
-                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 1 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                );
-            }
-
+            // This case should never happen
+            else 
+                printf("This case should never happen\n");
         }
 
         /* Case 2-2 : Lock list does not have its own TRX */
@@ -452,15 +422,7 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t **
 	}
 
     // This case should never happen
-    printf(
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 2 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-    );
+    printf("This case should never happen\n");
 
 	return 4;
 }
@@ -545,16 +507,7 @@ int lock_release(lock_t * lock_obj, int abort_flag) {
 
                     /* Case 1-2-2-1 : next lock is working lock */
                     if (lock_obj->next->is_waiting == 0) {
-                        // This case should never happen
-                        printf(
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 6 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        );
+                        printf("This case should never happen\n");
                     }
 
                     /* Case 1-2-2-2 : next lock is waiting lock */
@@ -579,16 +532,7 @@ int lock_release(lock_t * lock_obj, int abort_flag) {
 
                 /* Case 1-3-2 : lock_obj is X lock */
                 else {
-                    // This case should never happen
-                    printf(
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 5 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    );
+                    printf("This case should never happen\n");
                 }
 
 	        }
@@ -604,17 +548,7 @@ int lock_release(lock_t * lock_obj, int abort_flag) {
 
                 /* Case 1-4-2 : lock_obj is X lock */
                 else {
-                    print_lock_table();
-                    // This case should never happen
-                    printf(
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 4 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    );
+                    printf("This case should never happen\n");
                 }
 
 	        }
@@ -623,16 +557,7 @@ int lock_release(lock_t * lock_obj, int abort_flag) {
 
 	    /* Case 2 : lock_obj is waiting */
 	    else {
-            // This case should never happen
-            printf(
-                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 3 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-            );
+            printf("This case should never happen\n");
 	    }
 
         /* Case : send a signal to me ( S(trx1, working) -> X(trx1, waiting) ) */
@@ -696,16 +621,7 @@ int lock_release(lock_t * lock_obj, int abort_flag) {
 
                     /* Case 1-2-2-1 : next lock is working lock */
                     if (lock_obj->next->is_waiting == 0) {
-                        // This case should never happen
-                        printf(
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 9 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                                "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                        );
+                        printf("This case should never happen\n");
                     }
 
                     /* Case 1-2-2-2 : next lock is waiting lock */
@@ -730,16 +646,7 @@ int lock_release(lock_t * lock_obj, int abort_flag) {
 
                 /* Case 1-3-2 : lock_obj is X lock */
                 else {
-                    // This case should never happen
-                    printf(
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 8 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    );
+                    printf("This case should never happen\n");
                 }
 
             }
@@ -755,16 +662,7 @@ int lock_release(lock_t * lock_obj, int abort_flag) {
 
                 /* Case 1-4-2 : lock_obj is X lock */
                 else {
-                    // This case should never happen
-                    printf(
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ OHNONO ERROR 7 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                            "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-                    );
+                    printf("This case should never happen\n");
                 }
 
             }

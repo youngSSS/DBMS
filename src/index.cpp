@@ -1,17 +1,15 @@
 /* Index Manager API */
 
-#include "index_manager.h"
-#include "buffer_manager.h"
-#include "lock_manager.h"
-#include "transaction_manager.h"
-#include "log_manager.h"
-
+#include "index.h"
+#include "buffer.h"
+#include "lock.h"
+#include "transaction.h"
+#include "log.h"
 
 // Global variable
 
 int leaf_order = DEFAULT_LEAF_ORDER;
 int internal_order = DEFAULT_INTERNAL_ORDER;
-
 
 // Queue
 
@@ -20,77 +18,83 @@ int front = -1;
 int rear = -1;
 int q_size = 0;
 
-int IsEmpty() {
+int IsEmpty()
+{
     if (front == rear) return 1;
-    else return 0;
+    return 0;
 }
 
-int IsFull(){
+int IsFull()
+{
     if ((rear + 1) % MAX == front) return 1;
-    else return 0;
+    return 0;
 }
 
-void enqueue(pagenum_t pagenum) {
-    if ( !IsFull() ) {
+void enqueue(pagenum_t pagenum)
+{
+    if (!IsFull())
+    {
         rear = (rear + 1) % MAX;
         queue[rear] = pagenum;
         q_size++;
     }
 }
 
-pagenum_t dequeue(){
-    if (IsEmpty()) return 0;
-    else {
+pagenum_t dequeue()
+{
+    if (IsEmpty())
+        return 0;
+    else
+    {
         q_size--;
         front = (front + 1) % MAX;
         return queue[front];
     }
 }
 
-
 /* --- For layered architecture --- */
 
 // Buffer
 
-int index_init_db(int buf_num) {
+int index_init_db(int buf_num)
+{
     if (init_lock_table() == 1)
         return 4;
 
     return buf_init_db(buf_num);
 }
 
-
-int index_shutdown_db( void ) {
+int index_shutdown_db(void)
+{
     return buf_shutdown_db();
 }
 
-
-void index_flush(int table_id) {
+void index_flush(int table_id)
+{
     buf_flush(table_id);
 }
 
-
 // File
 
-int index_open(char * pathname) {
+int index_open(char *pathname)
+{
     return buf_open(pathname);
 }
 
-
-int index_close(int table_id) {
+int index_close(int table_id)
+{
     return buf_close(table_id);
 }
 
-
-int index_is_open(int table_id) {
+int index_is_open(int table_id)
+{
     return buf_is_open(table_id);
 }
 
-
-void index_print_table_list() {
+void index_print_table_list()
+{
     buf_print_table_list();
 }
-
 
 /* ------- Transaction APIs ------- */
 
@@ -98,14 +102,15 @@ void index_print_table_list() {
 // return 1 : no key
 // return 2 : abort
 
-int trx_find(int table_id, int64_t key, char * ret_val, int trx_id) {
+int trx_find(int table_id, int64_t key, char *ret_val, int trx_id)
+{
 
-    pthread_mutex_t *   page_latch;
-    lock_t *            lock_obj;
-    page_t *            page;
-    pagenum_t           pagenum;
-    int                 result;
-    int                 i;
+    pthread_mutex_t *page_latch;
+    lock_t *lock_obj;
+    page_t *page;
+    pagenum_t pagenum;
+    int result;
+    int i;
 
     /* -------------------- Find Leaf Page -------------------- */
     page = make_page();
@@ -113,7 +118,8 @@ int trx_find(int table_id, int64_t key, char * ret_val, int trx_id) {
     pagenum = page->h.root_pagenum;
 
     /* Case : key is not exist */
-    if (pagenum == 0) {
+    if (pagenum == 0)
+    {
         free(page);
         return 1;
     }
@@ -121,16 +127,22 @@ int trx_find(int table_id, int64_t key, char * ret_val, int trx_id) {
     // Read root page
     buf_read_page(table_id, pagenum, page);
 
-    while (!page->p.is_leaf) {
+    while (!page->p.is_leaf)
+    {
         i = 0;
 
-        while (i < page->p.num_keys) {
-            if (key >= page->p.i_records[i].key) i++;
-            else break;
+        while (i < page->p.num_keys)
+        {
+            if (key >= page->p.i_records[i].key)
+                i++;
+            else
+                break;
         }
 
-        if (i == 0) pagenum = page->p.one_more_pagenum;
-        else pagenum = page->p.i_records[i - 1].pagenum;
+        if (i == 0)
+            pagenum = page->p.one_more_pagenum;
+        else
+            pagenum = page->p.i_records[i - 1].pagenum;
 
         buf_read_page(table_id, pagenum, page);
     }
@@ -139,15 +151,18 @@ int trx_find(int table_id, int64_t key, char * ret_val, int trx_id) {
     // Get page latch
     page_latch = mutex_buf_read(table_id, pagenum, page, 0);
 
-    for (i = 0; i < page->p.num_keys; i++) {
+    for (i = 0; i < page->p.num_keys; i++)
+    {
 
-        if (key == page->p.l_records[i].key) {
+        if (key == page->p.l_records[i].key)
+        {
 
             // Acquire lock
             result = lock_acquire(table_id, page->p.l_records[i].key, trx_id, 0, &lock_obj, page_latch);
 
             /* Case : Success to acquire lock */
-            if (result == 0) {
+            if (result == 0)
+            {
 
                 /* We have PAGE LATCH & LOCK LATCH */
 
@@ -162,11 +177,11 @@ int trx_find(int table_id, int64_t key, char * ret_val, int trx_id) {
 
                 free(page);
                 return 0;
-
             }
 
             /* Case : Fail to acquire lock - Wait */
-            else if (result == 1) {
+            else if (result == 1)
+            {
 
                 /* We have PAGE LATCH & TRX LATCH */
 
@@ -189,27 +204,27 @@ int trx_find(int table_id, int64_t key, char * ret_val, int trx_id) {
 
                 free(page);
                 return 0;
-
             }
 
             /* Case : Deadlock */
-            else if (result == 2) {
+            else if (result == 2)
+            {
 
                 // Release page latch
                 pthread_mutex_unlock(page_latch);
 
                 free(page);
                 return 2;
-
             }
 
-            else {
-                if (result == 3) printf("malloc error in lock manager.cpp\n");
-                else printf("lock_acquire error (Must not be happen error\n");
+            else
+            {
+                if (result == 3)
+                    printf("malloc error in lock manager.cpp\n");
+                else
+                    printf("lock_acquire error (Must not be happen error\n");
             }
-
         }
-
     }
 
     /* Case : key is not exist */
@@ -218,20 +233,20 @@ int trx_find(int table_id, int64_t key, char * ret_val, int trx_id) {
     return 1;
 }
 
-
 // return 0 : update success
 // return 1 : no key
 // return 2 : abort
 
-int trx_update(int table_id, int64_t key, char * value, int trx_id) {
+int trx_update(int table_id, int64_t key, char *value, int trx_id)
+{
 
-    pthread_mutex_t *   page_latch;
-    lock_t *            lock_obj;
-    page_t *            page;
-    pagenum_t           pagenum;
-    int64_t             lsn;
-    int                 result;
-    int                 i;
+    pthread_mutex_t *page_latch;
+    lock_t *lock_obj;
+    page_t *page;
+    pagenum_t pagenum;
+    int64_t lsn;
+    int result;
+    int i;
 
     /* -------------------- Find Leaf Page -------------------- */
     page = make_page();
@@ -239,7 +254,8 @@ int trx_update(int table_id, int64_t key, char * value, int trx_id) {
     pagenum = page->h.root_pagenum;
 
     /* Case : key is not exist */
-    if (pagenum == 0) {
+    if (pagenum == 0)
+    {
         free(page);
         return 1;
     }
@@ -247,16 +263,22 @@ int trx_update(int table_id, int64_t key, char * value, int trx_id) {
     // Read root page
     buf_read_page(table_id, pagenum, page);
 
-    while (!page->p.is_leaf) {
+    while (!page->p.is_leaf)
+    {
         i = 0;
 
-        while (i < page->p.num_keys) {
-            if (key >= page->p.i_records[i].key) i++;
-            else break;
+        while (i < page->p.num_keys)
+        {
+            if (key >= page->p.i_records[i].key)
+                i++;
+            else
+                break;
         }
 
-        if (i == 0) pagenum = page->p.one_more_pagenum;
-        else pagenum = page->p.i_records[i - 1].pagenum;
+        if (i == 0)
+            pagenum = page->p.one_more_pagenum;
+        else
+            pagenum = page->p.i_records[i - 1].pagenum;
 
         buf_read_page(table_id, pagenum, page);
     }
@@ -265,15 +287,18 @@ int trx_update(int table_id, int64_t key, char * value, int trx_id) {
     // Get page latch
     page_latch = mutex_buf_read(table_id, pagenum, page, 0);
 
-    for (i = 0; i < page->p.num_keys; i++) {
+    for (i = 0; i < page->p.num_keys; i++)
+    {
 
-        if (key == page->p.l_records[i].key) {
+        if (key == page->p.l_records[i].key)
+        {
 
             // Acquire lock
             result = lock_acquire(table_id, page->p.l_records[i].key, trx_id, 1, &lock_obj, page_latch);
 
             /* Case : Success to acquire lock */
-            if (result == 0) {
+            if (result == 0)
+            {
 
                 /* We have PAGE LATCH & LOCK OBJECT LATCH */
 
@@ -282,7 +307,7 @@ int trx_update(int table_id, int64_t key, char * value, int trx_id) {
 
                 // Issue a UPDATE Log
                 lsn = issue_update_log(trx_id, table_id, pagenum, (pagenum * PAGE_SIZE) + PAGE_HEADER_SIZE + (128 * i),
-                                                 page->p.l_records[i].value, value);
+                                       page->p.l_records[i].value, value);
 
                 // Logging to transaction
                 trx_logging(table_id, key, trx_id, lsn, pagenum, i, page->p.l_records[i].value, value);
@@ -300,11 +325,11 @@ int trx_update(int table_id, int64_t key, char * value, int trx_id) {
 
                 free(page);
                 return 0;
-
             }
 
             /* Case : Fail to acquire lock - Wait */
-            else if (result == 1) {
+            else if (result == 1)
+            {
 
                 /* We have PAGE LATCH & TRX LATCH */
 
@@ -339,27 +364,27 @@ int trx_update(int table_id, int64_t key, char * value, int trx_id) {
 
                 free(page);
                 return 0;
-
             }
 
             /* Case : Deadlock */
-            else if (result == 2) {
+            else if (result == 2)
+            {
 
                 // Release page latch
                 pthread_mutex_unlock(page_latch);
 
                 free(page);
                 return 2;
-
             }
 
-            else {
-                if (result == 3) printf("malloc error in lock manager.cpp\n");
-                else printf("lock_acquire error (Must not be happen error\n");
+            else
+            {
+                if (result == 3)
+                    printf("malloc error in lock manager.cpp\n");
+                else
+                    printf("lock_acquire error (Must not be happen error\n");
             }
-
         }
-
     }
 
     /* Case : key is not exist */
@@ -368,17 +393,19 @@ int trx_update(int table_id, int64_t key, char * value, int trx_id) {
     return 1;
 }
 
-
-int undo(int table_id, pagenum_t pagenum, int64_t key, char * old_value, int compensate_lsn) {
-    page_t * page;
-    pthread_mutex_t * page_latch;
+int undo(int table_id, pagenum_t pagenum, int64_t key, char *old_value, int compensate_lsn)
+{
+    page_t *page;
+    pthread_mutex_t *page_latch;
     int i;
 
     page = make_page();
     page_latch = mutex_buf_read(table_id, pagenum, page, 0);
 
-    for (i = 0; i < page->p.num_keys; i++) {
-        if (key == page->p.l_records[i].key){
+    for (i = 0; i < page->p.num_keys; i++)
+    {
+        if (key == page->p.l_records[i].key)
+        {
             page->p.page_LSN = compensate_lsn;
             strcpy(page->p.l_records[i].value, old_value);
             mutex_buf_write(table_id, pagenum, page, 1);
@@ -394,13 +421,13 @@ int undo(int table_id, pagenum_t pagenum, int64_t key, char * old_value, int com
     return 1;
 }
 
-
 /* ---------- Index APIs ---------- */
 
 // Print
 
-void print_leaf(int table_id) {
-    page_t * header_page, * page;
+void print_leaf(int table_id)
+{
+    page_t *header_page, *page;
     pagenum_t temp_pagenum;
     int i = 0;
     int64_t value;
@@ -408,7 +435,8 @@ void print_leaf(int table_id) {
     header_page = make_page();
     file_read_page(table_id, 0, header_page);
 
-    if (header_page->h.root_pagenum == 0) {
+    if (header_page->h.root_pagenum == 0)
+    {
         printf("Tree is empty\n");
         free(header_page);
         return;
@@ -417,17 +445,20 @@ void print_leaf(int table_id) {
     page = make_page();
     file_read_page(table_id, header_page->h.root_pagenum, page);
 
-    while (!page->p.is_leaf) {
+    while (!page->p.is_leaf)
+    {
         temp_pagenum = page->p.one_more_pagenum;
         file_read_page(table_id, temp_pagenum, page);
     }
 
-    while (1) {
-        for (int j = 0; j < page->p.num_keys; j++) {
+    while (1)
+    {
+        for (int j = 0; j < page->p.num_keys; j++)
+        {
             value = atoi(page->p.l_records[j].value);
 
             if (page->p.l_records[j].key != value)
-                printf("(%ld, %s) ", page->p.l_records[j].key, page->p.l_records[j].value);
+                printf("(%lld, %s) ", page->p.l_records[j].key, page->p.l_records[j].value);
         }
 
         printf("| ");
@@ -444,15 +475,16 @@ void print_leaf(int table_id) {
     free(page);
 }
 
-
-void print_file(int table_id) {
-    page_t * header_page, * page;
+void print_file(int table_id)
+{
+    page_t *header_page, *page;
     int i = 0;
 
     header_page = make_page();
     file_read_page(table_id, 0, header_page);
 
-    if (header_page->h.root_pagenum == 0) {
+    if (header_page->h.root_pagenum == 0)
+    {
         printf("Tree is empty\n");
         free(header_page);
         return;
@@ -464,65 +496,36 @@ void print_file(int table_id) {
 
     printf("\n");
 
-    while (!IsEmpty()) {
+    while (!IsEmpty())
+    {
         int temp_size = q_size;
 
-        while (temp_size) {
+        while (temp_size)
+        {
             pagenum_t pagenum = dequeue();
 
             file_read_page(table_id, pagenum, page);
 
-            if (page->p.is_leaf) {
-                for (i = 0; i < page->p.num_keys; i++) {
-                    printf("(%ld, %s) ", page->p.l_records[i].key, page->p.l_records[i].value);
+            if (page->p.is_leaf)
+            {
+                for (i = 0; i < page->p.num_keys; i++)
+                {
+                    printf("(%lld, %s) ", page->p.l_records[i].key, page->p.l_records[i].value);
                 }
                 printf(" | ");
             }
 
-            else {
-                printf("[%lu] ", page->p.one_more_pagenum);
-
-                enqueue(page->p.one_more_pagenum);
-
-                for (i = 0; i < page->p.num_keys; i++) {
-                    printf("%ld [%lu] ", page->p.i_records[i].key, page->p.i_records[i].pagenum);
-                    enqueue(page->p.i_records[i].pagenum);
-                }
-
-                printf(" | ");
-            }
-
-            temp_size--;
-        }
-        printf("\n");
-    }
-
-    enqueue(header_page->h.root_pagenum);
-
-    printf("\n");
-
-    while (!IsEmpty()) {
-        int temp_size = q_size;
-
-        while (temp_size) {
-            pagenum_t pagenum = dequeue();
-
-            file_read_page(table_id, pagenum, page);
-
-            if (page->p.is_leaf) {
-                printf("pagenum : %lu, parent : %lu, is_leaf : %u, num keys : %u, right sibling : %lu",
-                       pagenum, page->p.parent_pagenum, page->p.is_leaf, page->p.num_keys, page->p.right_sibling_pagenum);
-                printf(" | ");
-            }
-
-            else {
-                printf("pagenum : %lu, parent : %lu, is_leaf : %u, num keys : %u, one more : %lu",
-                       pagenum, page->p.parent_pagenum, page->p.is_leaf, page->p.num_keys, page->p.one_more_pagenum);
+            else
+            {
+                printf("[%llu] ", page->p.one_more_pagenum);
 
                 enqueue(page->p.one_more_pagenum);
 
                 for (i = 0; i < page->p.num_keys; i++)
+                {
+                    printf("%lld [%llu] ", page->p.i_records[i].key, page->p.i_records[i].pagenum);
                     enqueue(page->p.i_records[i].pagenum);
+                }
 
                 printf(" | ");
             }
@@ -532,40 +535,86 @@ void print_file(int table_id) {
         printf("\n");
     }
 
+    // enqueue(header_page->h.root_pagenum);
+
     printf("\n");
+
+    // while (!IsEmpty())
+    // {
+    //     int temp_size = q_size;
+
+    //     while (temp_size)
+    //     {
+    //         pagenum_t pagenum = dequeue();
+
+    //         file_read_page(table_id, pagenum, page);
+
+    //         if (page->p.is_leaf)
+    //         {
+    //             printf("pagenum : %llu, parent : %llu, is_leaf : %u, num keys : %u, right sibling : %llu",
+    //                    pagenum, page->p.parent_pagenum, page->p.is_leaf, page->p.num_keys, page->p.right_sibling_pagenum);
+    //             printf(" | ");
+    //         }
+
+    //         else
+    //         {
+    //             printf("pagenum : %llu, parent : %llu, is_leaf : %u, num keys : %u, one more : %llu",
+    //                    pagenum, page->p.parent_pagenum, page->p.is_leaf, page->p.num_keys, page->p.one_more_pagenum);
+
+    //             enqueue(page->p.one_more_pagenum);
+
+    //             for (i = 0; i < page->p.num_keys; i++)
+    //                 enqueue(page->p.i_records[i].pagenum);
+
+    //             printf(" | ");
+    //         }
+
+    //         temp_size--;
+    //     }
+    //     printf("\n");
+    // }
+
+    // printf("\n");
 
     free(header_page);
     free(page);
 }
 
-
 /* Find */
 
-p_pnum find_leaf_page(int table_id, pagenum_t root_pagenum, int64_t key) {
+p_pnum find_leaf_page(int table_id, pagenum_t root_pagenum, int64_t key)
+{
     int i = 0;
-    page_t * page = NULL;
+    page_t *page = NULL;
     pagenum_t pagenum;
 
     /* Case : Empty file */
-    if (root_pagenum == 0) return make_pair(page, root_pagenum);
+    if (root_pagenum == 0)
+        return make_pair(page, root_pagenum);
 
     page = make_page();
     pagenum = root_pagenum;
     buf_read_page(table_id, pagenum, page);
 
-    while (!page->p.is_leaf) {
+    while (!page->p.is_leaf)
+    {
         i = 0;
 
-        while (i < page->p.num_keys) {
-            if (key >= page->p.i_records[i].key) i++;
-            else break;
+        while (i < page->p.num_keys)
+        {
+            if (key >= page->p.i_records[i].key)
+                i++;
+            else
+                break;
         }
 
-        if (i == 0) {
+        if (i == 0)
+        {
             pagenum = page->p.one_more_pagenum;
             buf_read_page(table_id, pagenum, page);
         }
-        else {
+        else
+        {
             pagenum = page->p.i_records[i - 1].pagenum;
             buf_read_page(table_id, pagenum, page);
         }
@@ -574,12 +623,12 @@ p_pnum find_leaf_page(int table_id, pagenum_t root_pagenum, int64_t key) {
     return make_pair(page, pagenum);
 }
 
-
-leafRecord * find(int table_id, pagenum_t root_pagenum, int64_t key) {
+leafRecord *find(int table_id, pagenum_t root_pagenum, int64_t key)
+{
 
     p_pnum leaf_pair;
-    page_t * leaf_page;
-    leafRecord * leaf_record;
+    page_t *leaf_page;
+    leafRecord *leaf_record;
     int i = 0;
 
     leaf_pair = find_leaf_page(table_id, root_pagenum, key);
@@ -587,12 +636,14 @@ leafRecord * find(int table_id, pagenum_t root_pagenum, int64_t key) {
     leaf_page = leaf_pair.first;
 
     // Case : Empty file
-    if (leaf_page == NULL) return NULL;
+    if (leaf_page == NULL)
+        return NULL;
 
-    leaf_record = (leafRecord*)malloc(sizeof(leafRecord));
+    leaf_record = (leafRecord *)malloc(sizeof(leafRecord));
 
     for (i = 0; i < leaf_page->p.num_keys; i++)
-        if (leaf_page->p.l_records[i].key == key){
+        if (leaf_page->p.l_records[i].key == key)
+        {
             leaf_record->key = leaf_page->p.l_records[i].key;
             strcpy(leaf_record->value, leaf_page->p.l_records[i].value);
             free(leaf_page);
@@ -604,11 +655,11 @@ leafRecord * find(int table_id, pagenum_t root_pagenum, int64_t key) {
     return NULL;
 }
 
-
-int _find(int table_id, int64_t key, char * ret_val) {
-    page_t * header_page;
+int _find(int table_id, int64_t key, char *ret_val)
+{
+    page_t *header_page;
     pagenum_t root_pagenum;
-    leafRecord * leaf_record;
+    leafRecord *leaf_record;
 
     header_page = make_page();
     buf_read_page(table_id, 0, header_page);
@@ -617,7 +668,8 @@ int _find(int table_id, int64_t key, char * ret_val) {
 
     leaf_record = find(table_id, root_pagenum, key);
 
-    if (leaf_record == NULL) return 2;
+    if (leaf_record == NULL)
+        return 2;
 
     strcpy(ret_val, leaf_record->value);
 
@@ -626,10 +678,10 @@ int _find(int table_id, int64_t key, char * ret_val) {
     return 0;
 }
 
-
 /* Insertion */
 
-leafRecord make_leaf_record(int64_t key, char * value) {
+leafRecord make_leaf_record(int64_t key, char *value)
+{
     leafRecord new_record;
 
     new_record.key = key;
@@ -638,12 +690,13 @@ leafRecord make_leaf_record(int64_t key, char * value) {
     return new_record;
 }
 
+page_t *make_page(void)
+{
+    page_t *new_page;
+    new_page = (page_t *)malloc(sizeof(page_t));
 
-page_t * make_page( void ) {
-    page_t* new_page;
-    new_page = (page_t*)malloc(sizeof(page_t));
-
-    if (new_page == NULL) {
+    if (new_page == NULL)
+    {
         perror("Page creation.");
         exit(EXIT_FAILURE);
     }
@@ -656,22 +709,23 @@ page_t * make_page( void ) {
     return new_page;
 }
 
-
-page_t * make_leaf_page( void ) {
-    page_t * leaf_page = make_page();
+page_t *make_leaf_page(void)
+{
+    page_t *leaf_page = make_page();
     leaf_page->p.is_leaf = 1;
     return leaf_page;
 }
 
-
-int get_left_index(int table_id, page_t * parent, pagenum_t left_pagenum) {
+int get_left_index(int table_id, page_t *parent, pagenum_t left_pagenum)
+{
 
     int left_index = 0;
 
     if (parent->p.one_more_pagenum == left_pagenum)
         return -1;
 
-    for (left_index = 0; left_index < parent->p.num_keys; left_index++) {
+    for (left_index = 0; left_index < parent->p.num_keys; left_index++)
+    {
         if (parent->p.i_records[left_index].pagenum == left_pagenum)
             break;
     }
@@ -679,10 +733,10 @@ int get_left_index(int table_id, page_t * parent, pagenum_t left_pagenum) {
     return left_index;
 }
 
+void insert_into_leaf(int table_id, p_pnum leaf_pair, int64_t key, leafRecord leaf_record)
+{
 
-void insert_into_leaf(int table_id, p_pnum leaf_pair, int64_t key, leafRecord leaf_record) {
-
-    page_t * leaf_page;
+    page_t *leaf_page;
     pagenum_t leaf_pagenum;
     int i, insertion_point = 0;
 
@@ -703,10 +757,10 @@ void insert_into_leaf(int table_id, p_pnum leaf_pair, int64_t key, leafRecord le
     free(leaf_page);
 }
 
+int insert_into_leaf_after_splitting(int table_id, p_pnum leaf_pair, int64_t key, leafRecord leaf_record)
+{
 
-int insert_into_leaf_after_splitting(int table_id, p_pnum leaf_pair, int64_t key, leafRecord leaf_record) {
-
-    page_t * leaf_page, * new_leaf_page;
+    page_t *leaf_page, *new_leaf_page;
     pagenum_t leaf_pagenum, new_leaf_pagenum, parent_pagenum;
     leafRecord temp_records[leaf_order];
     int insertion_index, split, new_key, i, j;
@@ -720,13 +774,16 @@ int insert_into_leaf_after_splitting(int table_id, p_pnum leaf_pair, int64_t key
 
     insertion_index = 0;
 
-    for (insertion_index = 0; insertion_index < leaf_page->p.num_keys; insertion_index++) {
+    for (insertion_index = 0; insertion_index < leaf_page->p.num_keys; insertion_index++)
+    {
         if (key < leaf_page->p.l_records[insertion_index].key)
             break;
     }
 
-    for (i = 0, j = 0; i < leaf_page->p.num_keys; i++, j++) {
-        if (j == insertion_index) j++;
+    for (i = 0, j = 0; i < leaf_page->p.num_keys; i++, j++)
+    {
+        if (j == insertion_index)
+            j++;
         temp_records[j] = leaf_page->p.l_records[i];
     }
 
@@ -736,12 +793,14 @@ int insert_into_leaf_after_splitting(int table_id, p_pnum leaf_pair, int64_t key
 
     split = cut(leaf_order - 1);
 
-    for (i = 0; i < split; i++) {
+    for (i = 0; i < split; i++)
+    {
         leaf_page->p.l_records[i] = temp_records[i];
         leaf_page->p.num_keys++;
     }
 
-    for (i = split, j = 0; i < leaf_order; i++, j++) {
+    for (i = split, j = 0; i < leaf_order; i++, j++)
+    {
         new_leaf_page->p.l_records[j] = temp_records[i];
         new_leaf_page->p.num_keys++;
     }
@@ -763,17 +822,17 @@ int insert_into_leaf_after_splitting(int table_id, p_pnum leaf_pair, int64_t key
     return insert_into_parent(table_id, parent_pagenum, leaf_pagenum, new_key, new_leaf_pagenum);
 }
 
+int insert_into_page(int table_id, p_pnum parent_pair, int left_index, int64_t key, pagenum_t right_pagenum)
+{
 
-int insert_into_page(int table_id, p_pnum parent_pair, int left_index, int64_t key, pagenum_t right_pagenum) {
-
-    page_t * parent;
+    page_t *parent;
     pagenum_t parent_pagenum;
     int i;
 
     parent = parent_pair.first;
     parent_pagenum = parent_pair.second;
 
-    for (i = parent->p.num_keys; i > left_index + 1 ; i--)
+    for (i = parent->p.num_keys; i > left_index + 1; i--)
         parent->p.i_records[i] = parent->p.i_records[i - 1];
 
     parent->p.i_records[left_index + 1].key = key;
@@ -787,10 +846,10 @@ int insert_into_page(int table_id, p_pnum parent_pair, int left_index, int64_t k
     return 1;
 }
 
+int insert_into_page_after_splitting(int table_id, p_pnum old_pair, int left_index, int64_t key, pagenum_t right_pagenum)
+{
 
-int insert_into_page_after_splitting(int table_id, p_pnum old_pair, int left_index, int64_t key, pagenum_t right_pagenum) {
-
-    page_t * old_page, * new_page, * child_page;
+    page_t *old_page, *new_page, *child_page;
     pagenum_t old_pagenum, new_pagenum, parent_pagenum;
     internalRecord temp_records[internal_order];
     int i, j, split, k_prime;
@@ -800,8 +859,10 @@ int insert_into_page_after_splitting(int table_id, p_pnum old_pair, int left_ind
 
     parent_pagenum = old_page->p.parent_pagenum;
 
-    for (i = 0, j = 0; i < old_page->p.num_keys; i++, j++) {
-        if (j == left_index + 1) j++;
+    for (i = 0, j = 0; i < old_page->p.num_keys; i++, j++)
+    {
+        if (j == left_index + 1)
+            j++;
         temp_records[j] = old_page->p.i_records[i];
     }
 
@@ -816,7 +877,8 @@ int insert_into_page_after_splitting(int table_id, p_pnum old_pair, int left_ind
     // old_page set
     old_page->p.num_keys = 0;
 
-    for (i = 0; i < split - 1; i++) {
+    for (i = 0; i < split - 1; i++)
+    {
         old_page->p.i_records[i] = temp_records[i];
         old_page->p.num_keys++;
     }
@@ -827,7 +889,8 @@ int insert_into_page_after_splitting(int table_id, p_pnum old_pair, int left_ind
     // new_page set
     new_page->p.one_more_pagenum = temp_records[split - 1].pagenum;
 
-    for (++i, j = 0; i < internal_order; i++, j++) {
+    for (++i, j = 0; i < internal_order; i++, j++)
+    {
         new_page->p.i_records[j] = temp_records[i];
         new_page->p.num_keys++;
     }
@@ -844,7 +907,8 @@ int insert_into_page_after_splitting(int table_id, p_pnum old_pair, int left_ind
     child_page->p.parent_pagenum = new_pagenum;
     buf_write_page(table_id, new_page->p.one_more_pagenum, child_page);
 
-    for (i = 0; i < new_page->p.num_keys; i++) {
+    for (i = 0; i < new_page->p.num_keys; i++)
+    {
         buf_read_page(table_id, new_page->p.i_records[i].pagenum, child_page);
         child_page->p.parent_pagenum = new_pagenum;
         buf_write_page(table_id, new_page->p.i_records[i].pagenum, child_page);
@@ -857,11 +921,11 @@ int insert_into_page_after_splitting(int table_id, p_pnum old_pair, int left_ind
     return insert_into_parent(table_id, parent_pagenum, old_pagenum, k_prime, new_pagenum);
 }
 
-
-int insert_into_parent(int table_id, pagenum_t parent_pagenum, pagenum_t left_pagenum, int64_t key, pagenum_t right_pagenum) {
+int insert_into_parent(int table_id, pagenum_t parent_pagenum, pagenum_t left_pagenum, int64_t key, pagenum_t right_pagenum)
+{
 
     int left_index;
-    page_t * parent;
+    page_t *parent;
 
     if (parent_pagenum == 0)
         return insert_into_new_root(table_id, left_pagenum, key, right_pagenum);
@@ -877,10 +941,10 @@ int insert_into_parent(int table_id, pagenum_t parent_pagenum, pagenum_t left_pa
     return insert_into_page_after_splitting(table_id, make_pair(parent, parent_pagenum), left_index, key, right_pagenum);
 }
 
+int insert_into_new_root(int table_id, pagenum_t left_pagenum, int64_t key, pagenum_t right_pagenum)
+{
 
-int insert_into_new_root(int table_id, pagenum_t left_pagenum, int64_t key, pagenum_t right_pagenum) {
-
-    page_t * header_page, * root, * left, * right;
+    page_t *header_page, *root, *left, *right;
     pagenum_t root_pagenum;
 
     root = make_page();
@@ -918,9 +982,9 @@ int insert_into_new_root(int table_id, pagenum_t left_pagenum, int64_t key, page
     return 1;
 }
 
-
-int start_new_tree(int table_id, int64_t key, leafRecord leaf_record) {
-    page_t * header_page, * root;
+int start_new_tree(int table_id, int64_t key, leafRecord leaf_record)
+{
+    page_t *header_page, *root;
     pagenum_t root_pagenum;
 
     root = make_leaf_page();
@@ -944,14 +1008,14 @@ int start_new_tree(int table_id, int64_t key, leafRecord leaf_record) {
     return 0;
 }
 
-
 /* Master insertion function */
-int insert(int table_id, int64_t key, char * value) {
+int insert(int table_id, int64_t key, char *value)
+{
 
     p_pnum leaf_pair;
-    page_t * header_page, * leaf_page;
+    page_t *header_page, *leaf_page;
     pagenum_t root_pagenum, leaf_pagenum;
-    leafRecord * duplicate_flag;
+    leafRecord *duplicate_flag;
     leafRecord leaf_record;
 
     header_page = make_page();
@@ -962,7 +1026,8 @@ int insert(int table_id, int64_t key, char * value) {
     duplicate_flag = find(table_id, root_pagenum, key);
 
     // The current implementation ignores duplicates
-    if (duplicate_flag != NULL) {
+    if (duplicate_flag != NULL)
+    {
         free(duplicate_flag);
         return 2;
     }
@@ -985,7 +1050,7 @@ int insert(int table_id, int64_t key, char * value) {
     if (leaf_page->p.num_keys < leaf_order - 1)
         insert_into_leaf(table_id, leaf_pair, key, leaf_record);
 
-        /* Case : leaf has no room for record */
+    /* Case : leaf has no room for record */
 
     else
         insert_into_leaf_after_splitting(table_id, leaf_pair, key, leaf_record);
@@ -993,24 +1058,26 @@ int insert(int table_id, int64_t key, char * value) {
     return 0;
 }
 
-
 /* Deletion */
 
-page_t * remove_entry_from_page(int table_id, p_pnum page_pair, int key_index) {
+page_t *remove_entry_from_page(int table_id, p_pnum page_pair, int key_index)
+{
 
-    page_t * page;
+    page_t *page;
     pagenum_t pagenum;
     int i, num_pointers;
 
     page = page_pair.first;
     pagenum = page_pair.second;
 
-    if (page->p.is_leaf) {
+    if (page->p.is_leaf)
+    {
         for (i = key_index + 1; i < page->p.num_keys; i++)
             page->p.l_records[i - 1] = page->p.l_records[i];
     }
 
-    else {
+    else
+    {
         for (i = key_index + 1; i < page->p.num_keys; i++)
             page->p.i_records[i - 1] = page->p.i_records[i];
     }
@@ -1021,10 +1088,10 @@ page_t * remove_entry_from_page(int table_id, p_pnum page_pair, int key_index) {
     return page;
 }
 
+int adjust_root(int table_id, p_pnum root_pair)
+{
 
-int adjust_root(int table_id, p_pnum root_pair) {
-
-    page_t * header_page, * root_page, * new_root_page;
+    page_t *header_page, *root_page, *new_root_page;
     pagenum_t root_pagenum;
 
     root_page = root_pair.first;
@@ -1041,7 +1108,8 @@ int adjust_root(int table_id, p_pnum root_pair) {
     buf_read_page(table_id, 0, header_page);
 
     // If it has a child, promote the first (only) child as the new root.
-    if (!root_page->p.is_leaf) {
+    if (!root_page->p.is_leaf)
+    {
         new_root_page = make_page();
 
         buf_read_page(table_id, root_page->p.one_more_pagenum, new_root_page);
@@ -1052,7 +1120,7 @@ int adjust_root(int table_id, p_pnum root_pair) {
         free(new_root_page);
     }
 
-        // If it is a leaf, then the whole tree is empty.
+    // If it is a leaf, then the whole tree is empty.
     else
         header_page->h.root_pagenum = 0;
 
@@ -1066,16 +1134,17 @@ int adjust_root(int table_id, p_pnum root_pair) {
     return 0;
 }
 
-
 // Always key_page's num_keys + neighbor's num_keys < (internal or leaf)order - 1
 // This means one_more_pagenum is not used when coalesce
-int coalesce_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum neighbor_pair, int neighbor_index, int k_prime) {
+int coalesce_nodes(int table_id, page_t *parent, p_pnum key_pair, p_pnum neighbor_pair, int neighbor_index, int k_prime)
+{
 
-    page_t * key_page, * neighbor, * temp_page;
+    page_t *key_page, *neighbor, *temp_page;
     pagenum_t parent_pagenum, key_pagenum, neighbor_pagenum;
     int i, j, neighbor_insertion_index, key_index;
 
-    if (neighbor_index == -2) {
+    if (neighbor_index == -2)
+    {
         key_page = neighbor_pair.first;
         key_pagenum = neighbor_pair.second;
 
@@ -1083,7 +1152,8 @@ int coalesce_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum neighb
         neighbor_pagenum = key_pair.second;
     }
 
-    else {
+    else
+    {
         key_page = key_pair.first;
         key_pagenum = key_pair.second;
 
@@ -1099,7 +1169,8 @@ int coalesce_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum neighb
 
     /* Case : internal page */
 
-    if (!key_page->p.is_leaf) {
+    if (!key_page->p.is_leaf)
+    {
         temp_page = make_page();
 
         neighbor->p.i_records[neighbor_insertion_index].key = k_prime;
@@ -1111,8 +1182,10 @@ int coalesce_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum neighb
         temp_page->p.parent_pagenum = neighbor_pagenum;
         buf_write_page(table_id, neighbor->p.i_records[neighbor_insertion_index].pagenum, temp_page);
 
-        if (neighbor_index == -2) {
-            for (i = neighbor_insertion_index + 1, j = 0; j < key_page->p.num_keys; i++, j++) {
+        if (neighbor_index == -2)
+        {
+            for (i = neighbor_insertion_index + 1, j = 0; j < key_page->p.num_keys; i++, j++)
+            {
                 neighbor->p.i_records[i] = key_page->p.i_records[j];
                 neighbor->p.num_keys++;
 
@@ -1125,22 +1198,26 @@ int coalesce_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum neighb
         free(temp_page);
     }
 
-        /* Case : leaf page */
+    /* Case : leaf page */
 
-    else {
-        if (neighbor_index == -2) {
-            for (i = neighbor_insertion_index, j = 0; j < key_page->p.num_keys; i++, j++) {
+    else
+    {
+        if (neighbor_index == -2)
+        {
+            for (i = neighbor_insertion_index, j = 0; j < key_page->p.num_keys; i++, j++)
+            {
                 neighbor->p.l_records[i] = key_page->p.l_records[j];
                 neighbor->p.num_keys++;
             }
         }
 
         neighbor->p.right_sibling_pagenum = key_page->p.right_sibling_pagenum;
-
     }
 
-    for (i = 0; i < parent->p.num_keys; i++) {
-        if (parent->p.i_records[i].pagenum == key_pagenum) {
+    for (i = 0; i < parent->p.num_keys; i++)
+    {
+        if (parent->p.i_records[i].pagenum == key_pagenum)
+        {
             key_index = i;
             break;
         }
@@ -1156,13 +1233,12 @@ int coalesce_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum neighb
     return 0;
 }
 
-
-int redistribute_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum neighbor_pair, int neighbor_flag
-        , int k_prime_index, int k_prime) {
+int redistribute_nodes(int table_id, page_t *parent, p_pnum key_pair, p_pnum neighbor_pair, int neighbor_flag, int k_prime_index, int k_prime)
+{
 
     // Only internal page can reach this function
 
-    page_t * key_page, * neighbor, * temp_page;
+    page_t *key_page, *neighbor, *temp_page;
     pagenum_t key_pagenum, neighbor_pagenum;
     int i, j;
     int num_neighbor_keys;
@@ -1185,7 +1261,8 @@ int redistribute_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum ne
 
     /* Case: neighbor is left sibling of key_page */
 
-    if (neighbor_flag != -2) {
+    if (neighbor_flag != -2)
+    {
 
         // Move key_page's 0th pagenum to the end
         // Move k_prime to end of key_page to maintain tree property
@@ -1195,7 +1272,8 @@ int redistribute_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum ne
         key_page->p.num_keys++;
 
         // Take a records from the neighbor to key_page
-        for (i = 0; i < move_cnt; i++) {
+        for (i = 0; i < move_cnt; i++)
+        {
             key_page->p.i_records[i] = neighbor->p.i_records[i + move_start_index];
             key_page->p.num_keys++;
             neighbor->p.num_keys--;
@@ -1214,7 +1292,8 @@ int redistribute_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum ne
         temp_page->p.parent_pagenum = key_pagenum;
         buf_write_page(table_id, key_page->p.one_more_pagenum, temp_page);
 
-        for (i = 0; i < key_page->p.num_keys; i++) {
+        for (i = 0; i < key_page->p.num_keys; i++)
+        {
             buf_read_page(table_id, key_page->p.i_records[i].pagenum, temp_page);
             temp_page->p.parent_pagenum = key_pagenum;
             buf_write_page(table_id, key_page->p.i_records[i].pagenum, temp_page);
@@ -1223,16 +1302,18 @@ int redistribute_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum ne
         free(temp_page);
     }
 
-        /* Case: neighbor is right sibling of key_page */
+    /* Case: neighbor is right sibling of key_page */
 
-    else {
+    else
+    {
 
         key_page->p.i_records[0].key = k_prime;
         key_page->p.num_keys++;
 
         // Take a records from the neighbor to key_page
         key_page->p.i_records[0].pagenum = neighbor->p.one_more_pagenum;
-        for (i = 0; i < move_cnt; i++) {
+        for (i = 0; i < move_cnt; i++)
+        {
             key_page->p.i_records[i + 1] = neighbor->p.i_records[i];
             key_page->p.num_keys++;
             neighbor->p.num_keys--;
@@ -1244,14 +1325,16 @@ int redistribute_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum ne
 
         // Rearrangement neighbor
         neighbor->p.one_more_pagenum = neighbor->p.i_records[i].pagenum;
-        for (++i, j = 0; i < num_neighbor_keys; i++, j++) {
+        for (++i, j = 0; i < num_neighbor_keys; i++, j++)
+        {
             neighbor->p.i_records[j] = neighbor->p.i_records[i];
         }
 
         temp_page = make_page();
 
         // Change parent of key_page's children
-        for (i = 0; i < key_page->p.num_keys; i++) {
+        for (i = 0; i < key_page->p.num_keys; i++)
+        {
             buf_read_page(table_id, key_page->p.i_records[i].pagenum, temp_page);
             temp_page->p.parent_pagenum = key_pagenum;
             buf_write_page(table_id, key_page->p.i_records[i].pagenum, temp_page);
@@ -1271,16 +1354,18 @@ int redistribute_nodes(int table_id, page_t * parent, p_pnum key_pair, p_pnum ne
     return 0;
 }
 
-
-int get_neighbor_index(int table_id, page_t * parent, pagenum_t key_pagenum) {
+int get_neighbor_index(int table_id, page_t *parent, pagenum_t key_pagenum)
+{
 
     int i, neighbor_index;
 
     if (parent->p.one_more_pagenum == key_pagenum)
         return -2;
 
-    for (i = 0; i < parent->p.num_keys; i++) {
-        if (parent->p.i_records[i].pagenum == key_pagenum) {
+    for (i = 0; i < parent->p.num_keys; i++)
+    {
+        if (parent->p.i_records[i].pagenum == key_pagenum)
+        {
             neighbor_index = i - 1;
             break;
         }
@@ -1289,11 +1374,11 @@ int get_neighbor_index(int table_id, page_t * parent, pagenum_t key_pagenum) {
     return neighbor_index;
 }
 
-
-int delete_entry(int table_id, p_pnum key_pair, int key_index) {
+int delete_entry(int table_id, p_pnum key_pair, int key_index)
+{
 
     p_pnum neighbor_pair;
-    page_t * parent, * key_page, * neighbor;
+    page_t *parent, *key_page, *neighbor;
     pagenum_t key_pagenum, neighbor_pagenum;
     int neighbor_index, neighbor_flag;
     int k_prime_index, k_prime;
@@ -1312,7 +1397,8 @@ int delete_entry(int table_id, p_pnum key_pair, int key_index) {
     /* Case : Delayed merge  */
 
     // If page has a key, do nothing
-    if (key_page->p.num_keys != 0) {
+    if (key_page->p.num_keys != 0)
+    {
         free(key_page);
         return 0;
     }
@@ -1354,9 +1440,10 @@ int delete_entry(int table_id, p_pnum key_pair, int key_index) {
     if (key_page->p.is_leaf)
         return coalesce_nodes(table_id, parent, key_pair, neighbor_pair, neighbor_flag, k_prime);
 
-        /* Case : key_page is internal page */
+    /* Case : key_page is internal page */
 
-    else {
+    else
+    {
         if (neighbor->p.num_keys == internal_order - 1)
             return redistribute_nodes(table_id, parent, key_pair, neighbor_pair, neighbor_flag, k_prime_index, k_prime);
 
@@ -1365,14 +1452,14 @@ int delete_entry(int table_id, p_pnum key_pair, int key_index) {
     }
 }
 
-
 /* Master deletion function */
-int _delete(int table_id, int64_t key) {
+int _delete(int table_id, int64_t key)
+{
 
     p_pnum key_leaf_pair;
-    page_t * header_page, * key_leaf_page;
+    page_t *header_page, *key_leaf_page;
     pagenum_t root_pagenum, key_leaf_pagenum;
-    leafRecord * key_record;
+    leafRecord *key_record;
     int key_index;
 
     header_page = make_page();
@@ -1382,7 +1469,8 @@ int _delete(int table_id, int64_t key) {
 
     key_record = find(table_id, root_pagenum, key);
 
-    if (key_record == NULL) {
+    if (key_record == NULL)
+    {
         free(key_record);
         return 2;
     }
@@ -1392,23 +1480,27 @@ int _delete(int table_id, int64_t key) {
     key_leaf_page = key_leaf_pair.first;
     key_leaf_pagenum = key_leaf_pair.second;
 
-    if (key_record != NULL && key_leaf_page != NULL) {
+    if (key_record != NULL && key_leaf_page != NULL)
+    {
         free(key_record);
-        for (int i = 0; i < key_leaf_page->p.num_keys; i++) {
-            if (key_leaf_page->p.l_records[i].key == key) {
+        for (int i = 0; i < key_leaf_page->p.num_keys; i++)
+        {
+            if (key_leaf_page->p.l_records[i].key == key)
+            {
                 key_index = i;
                 break;
             }
         }
     }
 
-    return delete_entry(table_id, key_leaf_pair, key_index);;
+    return delete_entry(table_id, key_leaf_pair, key_index);
+    ;
 }
-
 
 /* Etc */
 
-int cut( int length ) {
+int cut(int length)
+{
     if (length % 2 == 0)
         return length / 2;
     else

@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "file.h"
+#include "disk.h"
 
-// Positioned in file.cpp
+// Positioned in disk.cpp
 extern uint8_t Is_open[11];
 
 using namespace std;

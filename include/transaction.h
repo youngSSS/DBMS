@@ -1,7 +1,7 @@
-#ifndef __TRANSACTION_MANAGER_H__
-#define __TRANSACTION_MANAGER_H__
+#ifndef __transaction_H__
+#define __transaction_H__
 
-#include "lock_manager.h"
+#include "lock.h"
 
 using namespace std;
 
@@ -62,4 +62,4 @@ pthread_mutex_t  * get_trx_latch(int trx_id);
 
 void print_Trx_Table();
 
-#endif /* __TRANSACTION_MANAGER_H__ */
+#endif /* __transaction_H__ */

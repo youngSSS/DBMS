@@ -1,5 +1,5 @@
-#ifndef __INDEX_MANAGER_H__
-#define __INDEX_MANAGER_H__
+#ifndef __index_H__
+#define __index_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <vector>
 
-#include "file.h"
+#include "disk.h"
 
 // Max size of queue
 #define MAX 100000000
@@ -91,4 +91,4 @@ int _delete(int table_id, int64_t key);
 
 int cut(int length);
 
-#endif /* __INDEX_MANAGER_H__*/
+#endif /* __index_H__*/
