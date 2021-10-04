@@ -1,5 +1,5 @@
 # Disk-based B+ Tree Database Management System
-### For more details, read WIKI
+### For more details, check the WIKIs
 
 ### project 1
   - B+ Tree Analysis
