@@ -2,12 +2,12 @@
 #define __FILE_H__
 
 #include <sys/types.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdint>
+#include <cstring>
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 
 // Guideline of size
@@ -31,7 +31,6 @@
 #define DEFAULT_INTERNAL_ORDER 249
 
 using namespace std;
-
 
 typedef uint64_t pagenum_t;
 
@@ -100,7 +99,7 @@ typedef struct page_t {
 
 // Open & Close
 
-int file_open(char * pathname);
+int file_open(char* pathname);
 int file_close(int table_id);
 
 // File Modification
@@ -112,10 +111,9 @@ void file_write_page(int table_id, pagenum_t pagenum, const page_t* src);
 
 // Help Fuctions
 
-page_t * make_free_pages(int table_id, page_t * header_page);
-int get_table_id (string pathname);
+page_t* make_free_pages(int table_id, page_t* header_page);
+int get_table_id(string pathname);
 int is_open(int table_id);
 void file_print_table_list();
-
 
 #endif /* __FILE_H__*/
