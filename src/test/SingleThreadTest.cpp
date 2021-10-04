@@ -26,7 +26,7 @@ void* SST_func(void* args) {
 		table_id = table_id_array[rand() % SST_TABLE_NUMBER];
 		key1 = rand() % SST_TABLE_SIZE;
 		key2 = rand() % SST_TABLE_SIZE;
-		sprintf(value, "%ld", key2);
+		sprintf(value, "%lld", key2);
 
 		if (key1 == key2)
 			/* Avoid accessing the same record twice. */

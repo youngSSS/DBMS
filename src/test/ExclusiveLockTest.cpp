@@ -40,11 +40,11 @@ void* XLT_func(void* args) {
 				/* Avoid accessing the same record twice. */
 				continue;
 
-			sprintf(val, "%ld", keys[i]);
+			sprintf(val, "%lld", keys[i]);
 			ret = db_update(table_ids[i], keys[i], val, transaction_id);
 			if (ret != 0) {
 				printf("INCORRECT: fail to db_update()\n"
-					   "table id : %d, key : %d, value : %d, Trx_id :%d\n", table_ids[i], keys[i], val, transaction_id
+					   "table id : %d, key : %lld, value : %d, Trx_id :%d\n", table_ids[i], keys[i], val, transaction_id
 				);
 				return NULL;
 			}

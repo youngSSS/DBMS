@@ -26,8 +26,6 @@ struct trx_t {
 	pthread_mutex_t trx_latch;
 };
 
-
-
 /* APIs for transaction manager */
 
 // Transaction Function

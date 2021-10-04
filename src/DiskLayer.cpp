@@ -22,22 +22,18 @@ int file_open(char* pathname) {
 	table_id = get_table_id(temp_pathname);
 
 	/* Case : File is already opened */
-
 	if (Is_open[table_id] > 0)
 		return table_id;
 
 	/* Case : file name format is wrong */
-
 	if (table_id == -2) return -2;
 
 	fd = open(pathname, O_RDWR | O_CREAT, S_IRWXU);
 
 	/* Case : open fail */
-
 	if (fd == -1) return -1;
 
 	/* Case : open success */
-
 	Pathname[table_id] = temp_pathname;
 	Is_open[table_id] = fd;
 

@@ -6,7 +6,7 @@
 
 #define DATABASE_BUFFER_SIZE (100)
 
-int main(void) {
+int main() {
 
 	// Command
 	char instruction;
@@ -69,7 +69,7 @@ int main(void) {
 	char UPDATE_VALUE_2[120];
 	/***************************************************************/
 
-	// Usage
+	// Print usage
 	print_usage();
 	printf("> ");
 
@@ -77,10 +77,25 @@ int main(void) {
 
 		switch (instruction) {
 
+		case 'O':
+			scanf("%s", pathname);
+
+			table_id = open_table(pathname);
+
+			if (table_id == -1)
+				printf("Fail to open file\nFile open fault\n");
+			else if (table_id == -2)
+				printf("File name format is wrong\nFile name should be \"DATA00\"\nFile open fault\n");
+			else
+				printf("File open is completed\nTable id : %d\n", table_id);
+
+			break;
+
 		case 'B':
 			scanf("%d", &buf_size);
 			scanf("%d %d %s %s", &_flag, &_log_num, _log_path, _logmsg_path);
-			result = init_db(DATABASE_BUFFER_SIZE, _flag, _log_num, _log_path, _logmsg_path);
+			result = init_db(buf_size, _flag, _log_num, _log_path, _logmsg_path);
+
 			if (result == 0) printf("DB initializing is completed\n");
 			else if (result == 1) printf("Buffer creation fault\n");
 			else if (result == 2) printf("DB is already initialized\nDB initializing fault\n");
@@ -89,36 +104,49 @@ int main(void) {
 			else if (result == 5) printf("Transaction mutex error\n");
 			else if (result == 6) printf("Recovery error\n");
 			else printf("? Error ?\n");
-			break;
 
-		case 'O':
-			scanf("%s", pathname);
-			table_id = open_table(pathname);
-			if (table_id == -1) printf("Fail to open file\nFile open fault\n");
-			else if (table_id == -2)
-				printf("File name format is wrong\nFile name should be \"DATA00\"\nFile open fault\n");
-			else printf("File open is completed\nTable id : %d\n", table_id);
 			break;
 
 		case 'R':
-			index_init_db(100);
 			scanf("%d %d %s %s", &_flag, &_log_num, _log_path, _logmsg_path);
+
+			index_init_db(DATABASE_BUFFER_SIZE);
 			init_log(_logmsg_path);
+
 			DB_recovery(_flag, _log_num, _log_path);
 
 			break;
 
 		case 'i':
 			scanf("%d %ld %[^\n]", &table_id, &input_key, input_value);
+
 			start = clock();
 			result = db_insert(table_id, input_key, input_value);
 			end = clock();
+
 			if (result == 0) {
 				printf("Insertion is completed\n");
 				printf("Time : %f\n", (double)(end - start));
 			}
 			else if (result == 1) printf("Table_id[%d] file is not exist\n", table_id);
 			else if (result == 2) printf("Duplicate key <%ld>\nInsertion fault\n", input_key);
+
+			break;
+
+		case 'f':
+			scanf("%d %ld %[^\n]", &table_id, &input_key);
+
+			start = clock();
+			result = _find(table_id, input_key, input_value);
+			end = clock();
+
+			if (result == 0) {
+				printf("Find is completed\n");
+				printf("key: %lld, value: %d\n", input_key, input_value);
+				printf("Time : %f\n", (double)(end - start));
+			}
+			else if (result == 2) printf("%lld is not exist in %d table\n", input_key, table_id);
+
 			break;
 
 		case 'd':

@@ -1,8 +1,8 @@
 #ifndef __LOCK_MANAGER_H__
 #define __LOCK_MANAGER_H__
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdint>
 #include <pthread.h>
 #include <vector>
 #include <unordered_map>

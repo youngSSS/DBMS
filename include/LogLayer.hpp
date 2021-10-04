@@ -1,10 +1,10 @@
 #ifndef __LOG_MANAGER_H__
 #define __LOG_MANAGER_H__
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdlib>
 #include <pthread.h>
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 #include <unordered_map>
 #include <unistd.h>

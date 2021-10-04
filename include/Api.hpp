@@ -1,7 +1,8 @@
 #ifndef __DB_API_H__
 #define __DB_API_H__
 
-#include <stdlib.h>
+#include <iostream>
+#include <cstdlib>
 #include <pthread.h>
 
 #include "DiskLayer.hpp"

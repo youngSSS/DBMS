@@ -1,10 +1,10 @@
 #ifndef __INDEX_MANAGER_H__
 #define __INDEX_MANAGER_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdint>
+#include <cstring>
 #include <sys/types.h>
 #include <vector>
 

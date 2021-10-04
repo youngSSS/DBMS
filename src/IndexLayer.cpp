@@ -567,11 +567,9 @@ p_pnum find_leaf_page(int table_id, pagenum_t root_pagenum, int64_t key) {
 }
 
 leafRecord* find(int table_id, pagenum_t root_pagenum, int64_t key) {
-
 	p_pnum leaf_pair;
 	page_t* leaf_page;
 	leafRecord* leaf_record;
-	int i = 0;
 
 	leaf_pair = find_leaf_page(table_id, root_pagenum, key);
 
@@ -582,7 +580,7 @@ leafRecord* find(int table_id, pagenum_t root_pagenum, int64_t key) {
 
 	leaf_record = (leafRecord*)malloc(sizeof(leafRecord));
 
-	for (i = 0; i < leaf_page->p.num_keys; i++)
+	for (int i = 0; i < leaf_page->p.num_keys; i++)
 		if (leaf_page->p.l_records[i].key == key) {
 			leaf_record->key = leaf_page->p.l_records[i].key;
 			strcpy(leaf_record->value, leaf_page->p.l_records[i].value);
@@ -592,7 +590,7 @@ leafRecord* find(int table_id, pagenum_t root_pagenum, int64_t key) {
 
 	free(leaf_page);
 
-	return NULL;
+	return nullptr;
 }
 
 int _find(int table_id, int64_t key, char* ret_val) {
@@ -607,7 +605,7 @@ int _find(int table_id, int64_t key, char* ret_val) {
 
 	leaf_record = find(table_id, root_pagenum, key);
 
-	if (leaf_record == NULL) return 2;
+	if (leaf_record == nullptr) return 2;
 
 	strcpy(ret_val, leaf_record->value);
 
