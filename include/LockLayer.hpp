@@ -1,5 +1,5 @@
-#ifndef __lock_H__
-#define __lock_H__
+#ifndef __LOCK_MANAGER_H__
+#define __LOCK_MANAGER_H__
 
 #include <stdio.h>
 #include <stdint.h>
@@ -49,4 +49,4 @@ void lock_lock_latch();
 void release_lock_latch();
 void print_lock_table();
 
-#endif /* __lock_H__ */
+#endif /* __LOCK_MANAGER_H__ */

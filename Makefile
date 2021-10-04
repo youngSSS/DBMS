@@ -17,12 +17,12 @@ STATIC_LIB:=$(LIBS)libbpt.a
 # Include more files if you write another source file.
 SRCS_FOR_LIB:= \
 	$(SRCDIR)db_api.cpp \
-	$(SRCDIR)index.cpp \
-	$(SRCDIR)disk.cpp \
-	$(SRCDIR)buffer.cpp \
-	$(SRCDIR)lock.cpp \
-	$(SRCDIR)transaction.cpp \
-	$(SRCDIR)log.cpp
+	$(SRCDIR)index_manager.cpp \
+	$(SRCDIR)file.cpp \
+	$(SRCDIR)buffer_manager.cpp \
+	$(SRCDIR)lock_manager.cpp \
+	$(SRCDIR)transaction_manager.cpp \
+	$(SRCDIR)log_manager.cpp
 
 OBJS_FOR_LIB:=$(SRCS_FOR_LIB:.cpp=.o)
 

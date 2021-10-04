@@ -1,10 +1,10 @@
-#ifndef __buffer_H__
-#define __buffer_H__
+#ifndef __BUFFER_MANAGER_H__
+#define __BUFFER_MANAGER_H__
 
 #include <unordered_map>
 #include <pthread.h>
 
-#include "disk.h"
+#include "DiskLayer.hpp"
 
 #define NUM_TABLES 11
 
@@ -69,4 +69,4 @@ pthread_mutex_t * mutex_buf_read(int table_id, pagenum_t pagenum, page_t * dest,
 void mutex_buf_write(int table_id, pagenum_t pagenum, const page_t * src, int page_latch_flag);
 
 
-#endif /* __buffer_H__*/
+#endif /* __BUFFER_MANAGER_H__*/

@@ -1,5 +1,5 @@
-#ifndef __log_H__
-#define __log_H__
+#ifndef __LOG_MANAGER_H__
+#define __LOG_MANAGER_H__
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -112,4 +112,4 @@ int undo_pass(int flag, int log_num, int * start_offset);
 void print_log();
 
 
-#endif /* __log_H__ */
+#endif /* __LOG_MANAGER_H__ */
