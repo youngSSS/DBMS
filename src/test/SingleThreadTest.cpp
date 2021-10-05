@@ -37,23 +37,23 @@ void* SST_func(void* args) {
 		ret = db_find(table_id, key1, ret_val, transaction_id);
 		if (ret != 0) {
 			printf("INCORRECT: fail to db_find()\n");
-			return NULL;
+			return nullptr;
 		}
 		if (atoi(ret_val) != 0 && atoi(ret_val) != key1) {
 			printf("INCORRECT: value is wrong\n");
-			return NULL;
+			return nullptr;
 		}
 
 		ret = db_update(table_id, key2, value, transaction_id);
 		if (ret != 0) {
 			printf("INCORRECT: fail to db_update()\n");
-			return NULL;
+			return nullptr;
 		}
 
 		trx_commit(transaction_id);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /* simple single thread test */
@@ -64,7 +64,7 @@ void single_thread_test() {
 
 	/* Initiate variables for test. */
 	SST_operation_count = 0;
-	pthread_mutex_init(&SST_mutex, NULL);
+	pthread_mutex_init(&SST_mutex, nullptr);
 
 	/* Initiate database. */
 	init_db(DATABASE_BUFFER_SIZE, flag, log_num, "LogFile.db", "LogMessageFile.txt");
@@ -88,7 +88,7 @@ void single_thread_test() {
 	printf("database init\n");
 
 	/* thread create */
-	pthread_create(&thread, 0, SST_func, NULL);
+	pthread_create(&thread, 0, SST_func, nullptr);
 
 	for (;;) {
 		pthread_mutex_lock(&SST_mutex);
@@ -111,7 +111,7 @@ void single_thread_test() {
 	}
 
 	/* thread join */
-	pthread_join(thread, NULL);
+	pthread_join(thread, nullptr);
 
 	/* close table */
 	for (int i = 0; i < SST_TABLE_NUMBER; i++) {

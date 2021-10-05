@@ -7,7 +7,7 @@
 
 #include "DiskLayer.hpp"
 
-// Positioned in file.cpp
+// Positioned in DiskLayer.cpp
 extern uint8_t Is_open[11];
 
 using namespace std;
@@ -24,7 +24,7 @@ int db_find(int table_id, int64_t key, char* ret_val, int trx_id);
 int db_delete(int table_id, int64_t key);
 int db_update(int table_id, int64_t key, char* value, int trx_id);
 int close_table(int table_id);
-int shutdown_db(void);
+int shutdown_db();
 
 // Etc APIs
 

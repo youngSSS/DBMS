@@ -46,7 +46,7 @@ void* XLT_func(void* args) {
 				printf("INCORRECT: fail to db_update()\n"
 					   "table id : %d, key : %lld, value : %d, Trx_id :%d\n", table_ids[i], keys[i], val, transaction_id
 				);
-				return NULL;
+				return nullptr;
 			}
 		}
 
@@ -57,7 +57,7 @@ void* XLT_func(void* args) {
 
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void xlock_test() {
@@ -67,7 +67,7 @@ void xlock_test() {
 
 	/* Initiate variables for test. */
 	XLT_operation_count = 0;
-	pthread_mutex_init(&XLT_mutex, NULL);
+	pthread_mutex_init(&XLT_mutex, nullptr);
 
 	/* Initiate database. */
 	init_db(DATABASE_BUFFER_SIZE, flag, log_num, "LogFile.db", "LogMessageFile.txt");
@@ -92,7 +92,7 @@ void xlock_test() {
 
 	/* thread create */
 	for (int i = 0; i < XLT_THREAD_NUMBER; i++) {
-		pthread_create(&threads[i], 0, XLT_func, NULL);
+		pthread_create(&threads[i], 0, XLT_func, nullptr);
 	}
 
 	for (;;) {
@@ -118,7 +118,7 @@ void xlock_test() {
 
 	/* thread join */
 	for (int i = 0; i < XLT_THREAD_NUMBER; i++) {
-		pthread_join(threads[i], NULL);
+		pthread_join(threads[i], nullptr);
 	}
 
 	/* close table */

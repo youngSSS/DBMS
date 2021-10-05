@@ -57,16 +57,16 @@ int Log_Num = 0;
 int init_log(char* logmsg_path) {
 
 	// Initiate Log Buffer latch
-	if (pthread_mutex_init(&Log_Buffer_Latch, NULL) != 0) return 1;
+	if (pthread_mutex_init(&Log_Buffer_Latch, nullptr) != 0) return 1;
 
 	// Initiate Log Buffer latch
-	if (pthread_mutex_init(&Log_Write_Latch, NULL) != 0) return 1;
+	if (pthread_mutex_init(&Log_Write_Latch, nullptr) != 0) return 1;
 
 	// Initiate LSN latch
-	if (pthread_mutex_init(&LSN_Latch, NULL) != 0) return 1;
+	if (pthread_mutex_init(&LSN_Latch, nullptr) != 0) return 1;
 
 	// Initiate Trx LSN latch
-	if (pthread_mutex_init(&Trx_Last_LSN_Latch, NULL) != 0) return 1;
+	if (pthread_mutex_init(&Trx_Last_LSN_Latch, nullptr) != 0) return 1;
 
 	// Keep LSN
 	if (access(LSN_FILE, F_OK) != 0) {
@@ -196,7 +196,7 @@ int64_t get_and_update_last_LSN(int trx_id, int64_t lsn) {
 
 	pthread_mutex_lock(&Trx_Last_LSN_Latch);
 
-	/* Case : first log of trx_id transaction */
+	/* Case: first log of trx_id transaction */
 	if (Trx_Last_LSN.count(trx_id) == 0) last_lsn = -1;
 	else last_lsn = Trx_Last_LSN[trx_id];
 
@@ -311,8 +311,8 @@ int DB_recovery(int flag, int log_num, char* log_path) {
 	int result;
 
 
-	/* Case : Nothing to recover
-	 * If log file is not exist, make a log file and return 0
+	/* Case: Nothing to recover
+	 * If log file does not exist, make a log file and return 0
 	 */
 	if (access(log_path, F_OK) != 0) {
 		Log_File_Fd = open(log_path, O_RDWR | O_CREAT, S_IRWXU);
@@ -320,8 +320,8 @@ int DB_recovery(int flag, int log_num, char* log_path) {
 		return 0;
 	}
 
-	/* Case : Something to recover
-	 * If log file is not exist, make a log file and return 0
+	/* Case: Something to recover
+	 * If log file does not exist, make a log file and return 0
 	 */
 
 	// Open Log File
@@ -333,7 +333,7 @@ int DB_recovery(int flag, int log_num, char* log_path) {
 	offset = (int*)malloc(sizeof(int));
 	*offset = 0;
 
-	/* Case : Log Buffer is equal or larger than Log File */
+	/* Case: Log Buffer is equal or larger than Log File */
 	if (log_file_size <= LOG_BUFFER_SIZE) {
 
 		read_size = log_file_size;
@@ -398,7 +398,7 @@ int DB_recovery(int flag, int log_num, char* log_path) {
 
 	}
 
-		/* Case : Log Buffer is smaller than Log File */
+		/* Case: Log Buffer is smaller than Log File */
 	else {
 
 		/* -------------------- Analysis Pass -------------------- */
@@ -554,13 +554,13 @@ int analysis_pass(int read_size, int* start_offset) {
 
 		memcpy(&type, &Log_Buffer[offset + TYPE_START_POS], TYPE_SIZE);
 
-		/* Case : UPDATE Log, forward offset 284 */
+		/* Case: UPDATE Log, forward offset 284 */
 		if (type == 1) offset += LOG_U_SIZE;
 
-			/* Case : Compensate Log, forward offset 292 */
+			/* Case: Compensate Log, forward offset 292 */
 		else if (type == 4) offset += LOG_C_SIZE;
 
-			/* Case : BEGIN, COMMIT, ROLLBACK Log, forward offset 28 */
+			/* Case: BEGIN, COMMIT, ROLLBACK Log, forward offset 28 */
 		else {
 
 			memcpy(&trx_id, &Log_Buffer[offset + TRX_ID_START_POS], TRX_ID_SIZE);
@@ -653,7 +653,7 @@ int redo_pass(int flag, int log_num, int read_size, int* start_offset, unordered
 	char filename[100];
 
 	page = (page_t*)malloc(sizeof(page_t));
-	if (page == NULL) printf("malloc error in redo pass");
+	if (page == nullptr) printf("malloc error in redo pass");
 
 	offset = 0;
 
@@ -674,7 +674,7 @@ int redo_pass(int flag, int log_num, int read_size, int* start_offset, unordered
 
 		memcpy(&type, &Log_Buffer[offset + TYPE_START_POS], TYPE_SIZE);
 
-		/* Case : UPDATE */
+		/* Case: UPDATE */
 		if (type == 1) {
 
 			// Read log from log buffer
@@ -721,7 +721,7 @@ int redo_pass(int flag, int log_num, int read_size, int* start_offset, unordered
 
 		}
 
-			/* Case : COMPENSATE */
+			/* Case: COMPENSATE */
 		else if (type == 4) {
 
 			// Read log from log buffer
@@ -766,7 +766,7 @@ int redo_pass(int flag, int log_num, int read_size, int* start_offset, unordered
 
 		}
 
-			/* Case : BEGIN, COMMIT, ROLLBACK Log, forward offset 24 */
+			/* Case: BEGIN, COMMIT, ROLLBACK Log, forward offset 24 */
 		else {
 
 			// Read log from log buffer
@@ -843,7 +843,7 @@ int undo_pass(int flag, int log_num, int* start_offset) {
 	int undo_flag;
 
 	page = (page_t*)malloc(sizeof(page_t));
-	if (page == NULL) printf("malloc error in redo pass");
+	if (page == nullptr) printf("malloc error in redo pass");
 
 	while (Undo_List.size() != 0) {
 

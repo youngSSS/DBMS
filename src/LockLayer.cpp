@@ -7,7 +7,7 @@ pthread_mutex_t Lock_Latch;
 // return 0 : Success
 // return 1 : Lock_Latch initialize fault
 int init_lock_table() {
-	if (pthread_mutex_init(&Lock_Latch, NULL) != 0) return 1;
+	if (pthread_mutex_init(&Lock_Latch, nullptr) != 0) return 1;
 	return 0;
 }
 
@@ -49,7 +49,7 @@ int lock_list_existence_check(int table_id, int64_t key) {
 	if (Lock_Table[table_id].find(key) == Lock_Table[table_id].end())
 		return 0;
 	else {
-		if (Lock_Table[table_id][key] == NULL)
+		if (Lock_Table[table_id][key] == nullptr)
 			return 0;
 		else
 			return 1;
@@ -70,7 +70,7 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 
 		// Make lock table entry
 		table_entry = (lock_table_entry*)malloc(sizeof(lock_table_entry));
-		if (table_entry == NULL) {
+		if (table_entry == nullptr) {
 			printf("Make table entry fault\n");
 			pthread_mutex_unlock(&Lock_Latch);
 			return 3;
@@ -78,7 +78,7 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 
 		// Make lock object
 		lock_obj = (lock_t*)malloc(sizeof(lock_t));
-		if (lock_obj == NULL) {
+		if (lock_obj == nullptr) {
 			printf("Make lock object fault\n");
 			pthread_mutex_unlock(&Lock_Latch);
 			return 3;
@@ -98,11 +98,11 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 		lock_obj->lock_mode = lock_mode;
 		lock_obj->is_waiting = 0;
 		lock_obj->sentinel = table_entry;
-		lock_obj->prev = NULL;
-		lock_obj->next = NULL;
-		lock_obj->trx_prev = NULL;
-		lock_obj->trx_next = NULL;
-		pthread_cond_init(&lock_obj->cond, NULL);
+		lock_obj->prev = nullptr;
+		lock_obj->next = nullptr;
+		lock_obj->trx_prev = nullptr;
+		lock_obj->trx_next = nullptr;
+		pthread_cond_init(&lock_obj->cond, nullptr);
 
 		// Append lock_obj to Trx_Table
 		trx_linking(lock_obj);
@@ -126,7 +126,7 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 				break;
 			}
 			working_lock_obj = working_lock_obj->next;
-			if (working_lock_obj == NULL) break;
+			if (working_lock_obj == nullptr) break;
 		}
 
 		/* Case 2-1 : Lock list has its own TRX */
@@ -150,7 +150,7 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 
 						/* Case 2-1-1-1-2-1 : working_lock_obj is working alone */
 						if (Lock_Table[table_id][key]->head == working_lock_obj &&
-							(working_lock_obj->next == NULL || working_lock_obj->next->is_waiting == 1)) {
+							(working_lock_obj->next == nullptr || working_lock_obj->next->is_waiting == 1)) {
 							working_lock_obj->lock_mode = 1;
 							*ret_lock = working_lock_obj;
 							pthread_mutex_unlock(&Lock_Latch);
@@ -171,7 +171,7 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 
 								// Make lock object
 								lock_obj = (lock_t*)malloc(sizeof(lock_t));
-								if (lock_obj == NULL) {
+								if (lock_obj == nullptr) {
 									printf("Make lock object fault\n");
 									pthread_mutex_unlock(&Lock_Latch);
 									return 3;
@@ -182,11 +182,11 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 								lock_obj->lock_mode = lock_mode;
 								lock_obj->is_waiting = 1;
 								lock_obj->sentinel = Lock_Table[table_id][key];
-								lock_obj->prev = NULL;
-								lock_obj->next = NULL;
-								lock_obj->trx_prev = NULL;
-								lock_obj->trx_next = NULL;
-								pthread_cond_init(&lock_obj->cond, NULL);
+								lock_obj->prev = nullptr;
+								lock_obj->next = nullptr;
+								lock_obj->trx_prev = nullptr;
+								lock_obj->trx_next = nullptr;
+								pthread_cond_init(&lock_obj->cond, nullptr);
 
 								// Link lock_obj and lock list
 								lock_obj->prev = Lock_Table[table_id][key]->tail;
@@ -263,7 +263,7 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 
 			// Make lock object
 			lock_obj = (lock_t*)malloc(sizeof(lock_t));
-			if (lock_obj == NULL) {
+			if (lock_obj == nullptr) {
 				pthread_mutex_unlock(&Lock_Latch);
 				return 3;
 			}
@@ -273,11 +273,11 @@ int lock_acquire(int table_id, int64_t key, int trx_id, int lock_mode, lock_t** 
 			lock_obj->lock_mode = lock_mode;
 			lock_obj->is_waiting = 1;
 			lock_obj->sentinel = Lock_Table[table_id][key];
-			lock_obj->prev = NULL;
-			lock_obj->next = NULL;
-			lock_obj->trx_prev = NULL;
-			lock_obj->trx_next = NULL;
-			pthread_cond_init(&lock_obj->cond, NULL);
+			lock_obj->prev = nullptr;
+			lock_obj->next = nullptr;
+			lock_obj->trx_prev = nullptr;
+			lock_obj->trx_next = nullptr;
+			pthread_cond_init(&lock_obj->cond, nullptr);
 
 			// Link lock_obj and lock list
 			lock_obj->prev = Lock_Table[table_id][key]->tail;
@@ -474,7 +474,7 @@ void send_signal(lock_t* lock_obj) {
 			pthread_mutex_unlock(get_trx_latch(lock_obj->trx_id));
 
 			lock_obj = lock_obj->next;
-			if (lock_obj == NULL) break;
+			if (lock_obj == nullptr) break;
 		}
 	}
 
@@ -499,7 +499,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 	table_id = lock_obj->sentinel->table_id;
 	key = lock_obj->sentinel->key;
 
-	/* Case : Release by trx_commit */
+	/* Case: Release by trx_commit */
 	if (abort_flag == 0) {
 
 		/* Case 1 : lock_obj is working */
@@ -523,13 +523,13 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 					/* Case 1-2-1-1 : next lock is working lock */
 					if (lock_obj->next->is_waiting == 0) {
 						Lock_Table[table_id][key]->head = lock_obj->next;
-						lock_obj->next->prev = NULL;
+						lock_obj->next->prev = nullptr;
 					}
 
 						/* Case 1-2-1-2 : next lock is waiting lock */
 					else {
 						Lock_Table[table_id][key]->head = lock_obj->next;
-						lock_obj->next->prev = NULL;
+						lock_obj->next->prev = nullptr;
 						send_signal(Lock_Table[table_id][key]->head);
 					}
 
@@ -555,7 +555,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 						/* Case 1-2-2-2 : next lock is waiting lock */
 					else {
 						Lock_Table[table_id][key]->head = lock_obj->next;
-						lock_obj->next->prev = NULL;
+						lock_obj->next->prev = nullptr;
 						send_signal(Lock_Table[table_id][key]->head);
 					}
 
@@ -569,7 +569,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 				/* Case 1-3-1 : lock_obj is S lock */
 				if (lock_obj->lock_mode == 0) {
 					Lock_Table[table_id][key]->tail = lock_obj->prev;
-					lock_obj->prev->next = NULL;
+					lock_obj->prev->next = nullptr;
 				}
 
 					/* Case 1-3-2 : lock_obj is X lock */
@@ -630,17 +630,17 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 			);
 		}
 
-		/* Case : send a signal to me ( S(trx1, working) -> X(trx1, waiting) ) */
+		/* Case: send a signal to me ( S(trx1, working) -> X(trx1, waiting) ) */
 		if (Lock_Table[table_id].find(key) != Lock_Table[table_id].end()) {
 			// if stmt means that there is only 1 working lock
-			if (Lock_Table[table_id][key]->head->next != NULL &&
+			if (Lock_Table[table_id][key]->head->next != nullptr &&
 				Lock_Table[table_id][key]->head->next->is_waiting == 1 &&
 				Lock_Table[table_id][key]->head->trx_id == Lock_Table[table_id][key]->head->next->trx_id) {
 
 				temp_lock_obj = Lock_Table[table_id][key]->head;
 
 				Lock_Table[table_id][key]->head = Lock_Table[table_id][key]->head->next;
-				Lock_Table[table_id][key]->head->prev = NULL;
+				Lock_Table[table_id][key]->head->prev = nullptr;
 
 				trx_cut_linking(temp_lock_obj);
 				free(temp_lock_obj);
@@ -652,7 +652,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 	}
 
 
-		/* Case : Release by trx_abort */
+		/* Case: Release by trx_abort */
 	else {
 
 		/* Case 1 : lock_obj is working */
@@ -674,13 +674,13 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 					/* Case 1-2-1-1 : next lock is working lock */
 					if (lock_obj->next->is_waiting == 0) {
 						Lock_Table[table_id][key]->head = lock_obj->next;
-						lock_obj->next->prev = NULL;
+						lock_obj->next->prev = nullptr;
 					}
 
 						/* Case 1-2-1-2 : next lock is waiting lock */
 					else {
 						Lock_Table[table_id][key]->head = lock_obj->next;
-						lock_obj->next->prev = NULL;
+						lock_obj->next->prev = nullptr;
 						send_signal(Lock_Table[table_id][key]->head);
 					}
 
@@ -706,7 +706,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 						/* Case 1-2-2-2 : next lock is waiting lock */
 					else {
 						Lock_Table[table_id][key]->head = lock_obj->next;
-						lock_obj->next->prev = NULL;
+						lock_obj->next->prev = nullptr;
 						send_signal(Lock_Table[table_id][key]->head);
 					}
 
@@ -720,7 +720,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 				/* Case 1-3-1 : lock_obj is S lock */
 				if (lock_obj->lock_mode == 0) {
 					Lock_Table[table_id][key]->tail = lock_obj->prev;
-					lock_obj->prev->next = NULL;
+					lock_obj->prev->next = nullptr;
 				}
 
 					/* Case 1-3-2 : lock_obj is X lock */
@@ -764,17 +764,17 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 
 			}
 
-			/* Case : send a signal to me ( S(trx1, working) -> X(trx1, waiting) ) */
+			/* Case: send a signal to me ( S(trx1, working) -> X(trx1, waiting) ) */
 			if (Lock_Table[table_id].find(key) != Lock_Table[table_id].end()) {
 				// if stmt means that there is only 1 working lock
-				if (Lock_Table[table_id][key]->head->next != NULL &&
+				if (Lock_Table[table_id][key]->head->next != nullptr &&
 					Lock_Table[table_id][key]->head->next->is_waiting == 1 &&
 					Lock_Table[table_id][key]->head->trx_id == Lock_Table[table_id][key]->head->next->trx_id) {
 
 					temp_lock_obj = Lock_Table[table_id][key]->head;
 
 					Lock_Table[table_id][key]->head = Lock_Table[table_id][key]->head->next;
-					Lock_Table[table_id][key]->head->prev = NULL;
+					Lock_Table[table_id][key]->head->prev = nullptr;
 
 					trx_cut_linking(temp_lock_obj);
 					free(temp_lock_obj);
@@ -794,7 +794,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 				/* Case 2-1-1 : lock_obj is tail */
 				if (Lock_Table[table_id][key]->tail == lock_obj) {
 					Lock_Table[table_id][key]->tail = lock_obj->prev;
-					lock_obj->prev->next = NULL;
+					lock_obj->prev->next = nullptr;
 				}
 
 					/* Case 2-1-2 : lock_obj is not tail */
@@ -823,7 +823,7 @@ int lock_release(lock_t* lock_obj, int abort_flag) {
 				/* Case 2-2-1 : lock_obj is tail */
 				if (Lock_Table[table_id][key]->tail == lock_obj) {
 					Lock_Table[table_id][key]->tail = lock_obj->prev;
-					lock_obj->prev->next = NULL;
+					lock_obj->prev->next = nullptr;
 				}
 
 					/* Case 2-2-2 : lock_obj is not tail */
@@ -872,7 +872,7 @@ void print_lock_table() {
 		for (iter1 = iter->second.begin(); iter1 != iter->second.end(); iter1++) {
 			printf("Table id : %d, key : %d - ", iter->first, iter1->first);
 			lock_obj = iter1->second->head;
-			while (lock_obj != NULL) {
+			while (lock_obj != nullptr) {
 				printf("trx_id(%d), %d, %d -> ", lock_obj->trx_id, lock_obj->lock_mode, lock_obj->is_waiting);
 				lock_obj = lock_obj->next;
 			}

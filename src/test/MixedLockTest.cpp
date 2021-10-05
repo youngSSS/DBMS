@@ -46,11 +46,11 @@ void* MLT_func(void* args) {
 				ret = db_find(table_ids[i], keys[i], ret_val, transaction_id);
 				if (ret != 0) {
 					printf("INCORRECT: fail to db_find()\n");
-					return NULL;
+					return nullptr;
 				}
 				if (keys[i] != 0 && (atoi(ret_val) % keys[i]) != 0) {
 					printf("INCORRECT: value is wrong\n");
-					return NULL;
+					return nullptr;
 				}
 			}
 			else {
@@ -58,7 +58,7 @@ void* MLT_func(void* args) {
 				sprintf(val, "%ld", keys[i] * (rand() % 100));
 				ret = db_update(table_ids[i], keys[i], val, transaction_id);
 				if (ret != 0) {
-					return NULL;
+					return nullptr;
 				}
 			}
 
@@ -69,7 +69,7 @@ void* MLT_func(void* args) {
 		trx_commit(transaction_id);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void mlock_test() {
@@ -79,7 +79,7 @@ void mlock_test() {
 
 	/* Initiate variables for test. */
 	MLT_operation_count = 0;
-	pthread_mutex_init(&MLT_mutex, NULL);
+	pthread_mutex_init(&MLT_mutex, nullptr);
 
 	/* Initiate database. */
 	init_db(10, flag, log_num, "LogFile.db", "LogMessageFile.txt");
@@ -104,7 +104,7 @@ void mlock_test() {
 
 	/* thread create */
 	for (int i = 0; i < MLT_THREAD_NUMBER; i++) {
-		pthread_create(&threads[i], 0, MLT_func, NULL);
+		pthread_create(&threads[i], 0, MLT_func, nullptr);
 	}
 
 	for (;;) {
@@ -130,7 +130,7 @@ void mlock_test() {
 
 	/* thread join */
 	for (int i = 0; i < MLT_THREAD_NUMBER; i++) {
-		pthread_join(threads[i], NULL);
+		pthread_join(threads[i], nullptr);
 	}
 
 	/* close table */

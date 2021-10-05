@@ -42,12 +42,12 @@ void* SLT_func(void* args) {
 			ret = db_find(table_ids[i], keys[i], ret_val, transaction_id);
 			if (ret != 0) {
 				printf("INCORRECT: fail to db_find()\n", pthread_self());
-				return NULL;
+				return nullptr;
 			}
 			if (atoi(ret_val) != keys[i]) {
 				printf("INCORRECT: value is wrong\n");
 				printf("value : %d, ret_val : %d\n", pthread_self(), i, keys[i], atoi(ret_val));
-				return NULL;
+				return nullptr;
 			}
 		}
 
@@ -55,7 +55,7 @@ void* SLT_func(void* args) {
 		trx_commit(transaction_id);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void slock_test() {
@@ -65,7 +65,7 @@ void slock_test() {
 
 	/* Initiate variables for test. */
 	SLT_operation_count = 0;
-	pthread_mutex_init(&SLT_mutex, NULL);
+	pthread_mutex_init(&SLT_mutex, nullptr);
 
 	/* Initiate database. */
 	init_db(DATABASE_BUFFER_SIZE, flag, log_num, "LogFile.db", "LogMessageFile.txt");
@@ -90,7 +90,7 @@ void slock_test() {
 
 	/* thread create */
 	for (int i = 0; i < SLT_THREAD_NUMBER; i++) {
-		pthread_create(&threads[i], 0, SLT_func, NULL);
+		pthread_create(&threads[i], 0, SLT_func, nullptr);
 	}
 
 	for (;;) {
@@ -115,7 +115,7 @@ void slock_test() {
 
 	/* thread join */
 	for (int i = 0; i < SLT_THREAD_NUMBER; i++) {
-		pthread_join(threads[i], NULL);
+		pthread_join(threads[i], nullptr);
 	}
 
 	/* close table */

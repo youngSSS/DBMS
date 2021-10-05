@@ -55,7 +55,7 @@ void* DLT_func(void* args) {
 				}
 				if (keys[i] != 0 && (atoi(ret_val) % keys[i]) != 0) {
 					printf("INCORRECT: value is wrong\n");
-					return NULL;
+					return nullptr;
 				}
 			}
 			else {
@@ -72,7 +72,7 @@ void* DLT_func(void* args) {
 		trx_commit(transaction_id);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void deadlock_test() {
@@ -82,7 +82,7 @@ void deadlock_test() {
 
 	/* Initiate variables for test. */
 	DLT_operation_count = 0;
-	pthread_mutex_init(&DLT_mutex, NULL);
+	pthread_mutex_init(&DLT_mutex, nullptr);
 
 	/* Initiate database. */
 	init_db(DATABASE_BUFFER_SIZE, flag, log_num, "LogFile.db", "LogMessageFile.txt");
@@ -107,7 +107,7 @@ void deadlock_test() {
 
 	/* thread create */
 	for (int i = 0; i < DLT_THREAD_NUMBER; i++) {
-		pthread_create(&threads[i], 0, DLT_func, NULL);
+		pthread_create(&threads[i], 0, DLT_func, nullptr);
 	}
 
 	for (;;) {
@@ -133,7 +133,7 @@ void deadlock_test() {
 
 	/* thread join */
 	for (int i = 0; i < DLT_THREAD_NUMBER; i++) {
-		pthread_join(threads[i], NULL);
+		pthread_join(threads[i], nullptr);
 	}
 
 	/* close table */

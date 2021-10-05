@@ -83,9 +83,11 @@ int main() {
 			table_id = open_table(pathname);
 
 			if (table_id == -1)
-				printf("Fail to open file\nFile open fault\n");
+				printf("Fail to open the file\nFile open fault\n");
 			else if (table_id == -2)
-				printf("File name format is wrong\nFile name should be \"DATA00\"\nFile open fault\n");
+				printf("File name format is wrong\nFile name should be in \"DATA1 - DATA10\"\nFile open fault\n");
+			else if (table_id == -3)
+				printf("Memory allocation error in DiskLayer.cpp\n");
 			else
 				printf("File open is completed\nTable id : %d\n", table_id);
 
@@ -118,7 +120,7 @@ int main() {
 			break;
 
 		case 'i':
-			scanf("%d %ld %[^\n]", &table_id, &input_key, input_value);
+			scanf("%d %lld %[^\n]", &table_id, &input_key, input_value);
 
 			start = clock();
 			result = db_insert(table_id, input_key, input_value);
@@ -126,15 +128,15 @@ int main() {
 
 			if (result == 0) {
 				printf("Insertion is completed\n");
-				printf("Time : %f\n", (double)(end - start));
+				printf("Time : %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 			}
-			else if (result == 1) printf("Table_id[%d] file is not exist\n", table_id);
-			else if (result == 2) printf("Duplicate key <%ld>\nInsertion fault\n", input_key);
+			else if (result == 1) printf("Table_id[%d] file does not exist\n", table_id);
+			else if (result == 2) printf("Duplicate key <%lld>\nInsertion fault\n", input_key);
 
 			break;
 
 		case 'f':
-			scanf("%d %ld %[^\n]", &table_id, &input_key);
+			scanf("%d %lld", &table_id, &input_key);
 
 			start = clock();
 			result = _find(table_id, input_key, input_value);
@@ -142,28 +144,61 @@ int main() {
 
 			if (result == 0) {
 				printf("Find is completed\n");
-				printf("key: %lld, value: %d\n", input_key, input_value);
-				printf("Time : %f\n", (double)(end - start));
+				printf("key: %lld, value: %s\n", input_key, input_value);
+				printf("Time : %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 			}
-			else if (result == 2) printf("%lld is not exist in %d table\n", input_key, table_id);
+			else if (result == 2) printf("%lld does not exist in table %d\n", input_key, table_id);
 
 			break;
 
 		case 'd':
-			scanf("%d %ld", &table_id, &input_key);
+			scanf("%d %lld", &table_id, &input_key);
+
 			start = clock();
 			result = db_delete(table_id, input_key);
 			end = clock();
+
 			if (result == 0) {
 				printf("Deletion is completed\n");
-				printf("Time : %f\n", (double)(end - start));
+				printf("Time : %f\n", (double)(end - start) / CLOCKS_PER_SEC);
 			}
-			else if (result == 1) printf("Table_id[%d] file is not exist\n", table_id);
-			else if (result == 2) printf("No such key <%ld>\nDeletion fault\n", input_key);
+			else if (result == 1) printf("Table_id[%d] file does not exist\n", table_id);
+			else if (result == 2) printf("No such key <%lld>\nDeletion fault\n", input_key);
 			break;
 
+		case 'I':
+			scanf("%d %lld %lld", &table_id, &in_start, &in_end);
+
+			strcpy(a, "a");
+
+			start = clock();
+			for (int64_t i = in_start; i <= in_end; i++) {
+				sprintf(a, "%lld", i);
+				result = db_insert(table_id, i, a);
+				if (result == 2) printf("Duplicate key <%ld>\nInsertion fault\n", i);
+			}
+			end = clock();
+
+			printf("Time : %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+
+			break;
+
+		case 'D':
+			scanf("%d %lld %lld", &table_id, &del_start, &del_end);
+
+			start = clock();
+			for (int64_t i = del_start; i <= del_end; i++) {
+				result = db_delete(table_id, i);
+				if (result == 2) printf("No such key <%lld>\nDeletion fault\n", i);
+			}
+			end = clock();
+
+			printf("Time : %f\n", (double)(end - start) / CLOCKS_PER_SEC);
+
+			break;
+
+			// Test
 		case 'u':
-			/***************************** TEST ****************************/
 			// Initialize DB
 			init_db(BUF_SIZE, FLAG, LOG_NUM, LOG_PATH, LOGMSG_PATH);
 			printf("SUCCESS :: INITIALIZE DB\n");
@@ -174,7 +209,7 @@ int main() {
 
 			// Insert values
 			for (int64_t i = 0; i <= 1000; i++) {
-				sprintf(VALUE, "%ld", i);
+				sprintf(VALUE, "%lld", i);
 				db_insert(TABLE_ID, i, VALUE);
 			}
 			printf("SUCCESS :: INSERT VALUES\n");
@@ -193,74 +228,35 @@ int main() {
 				}
 
 				// COMMIT Transaction 1, 3, 5, 7
-				if (TRX_ID[i] == 1 || TRX_ID[i] == 3 || TRX_ID[i] == 5 || TRX_ID[i] == 7)
-					trx_commit(TRX_ID[i]);
+				if (TRX_ID[i] % 2 == 1 && TRX_ID[i] != 9) trx_commit(TRX_ID[i]);
 
-					// ABORT Transaction 2, 4, 6, 10
-				else if (TRX_ID[i] == 2 || TRX_ID[i] == 4 || TRX_ID[i] == 6 || TRX_ID[i] == 10)
-					trx_abort(TRX_ID[i]);
+				// ABORT Transaction 2, 4, 6, 10
+				else if (TRX_ID[i] % 2 == 0 && TRX_ID[i] != 8) trx_abort(TRX_ID[i]);
 
-					// Do not COMMIT OR ABORT Transaction 8, 9
-				else
-					continue;
+				// Do not COMMIT OR ABORT Transaction 8, 9
+				else continue;
 
 				// FLUSH DATA BUFFER TO DATA DISK
-				if (TRX_ID[i] == 4)
-					db_flush(TABLE_ID);
-
+				if (TRX_ID[i] == 4) db_flush(TABLE_ID);
 			}
+
 			printf("SUCCESS :: TEST\n");
-			/***************************************************************/
 			break;
 
 		case 'L':
 			write_log(0, 0);
 			break;
 
-		case 'I':
-			scanf("%d %ld %ld", &table_id, &in_start, &in_end);
-			strcpy(a, "a");
-			start = clock();
-			for (int64_t i = in_start; i <= in_end; i++) {
-				sprintf(a, "%ld", i);
-				result = db_insert(table_id, i, a);
-				if (result == 2) printf("Duplicate key <%ld>\nInsertion fault\n", i);
-			}
-			end = clock();
-			printf("Time : %f\n", (double)(end - start));
-			break;
-
-		case 'D':
-			scanf("%d %ld %ld", &table_id, &del_start, &del_end);
-			start = clock();
-			for (int64_t i = del_start; i <= del_end; i++) {
-				result = db_delete(table_id, i);
-				if (result == 2) printf("No such key <%ld>\nDeletion fault\n", i);
-			}
-			end = clock();
-			printf("Time : %f\n", (double)(end - start));
-			break;
-
 		case 'T':
 			srand(123);
-
 			scanf("%d", &mode);
 
-			if (mode == 1) {
-				single_thread_test();
-			}
-			else if (mode == 2) {
-				slock_test();
-			}
-			else if (mode == 3) {
-				xlock_test();
-			}
-			else if (mode == 4) {
-				mlock_test();
-			}
-			else if (mode == 5) {
-				deadlock_test();
-			}
+			if (mode == 1) single_thread_test();
+			else if (mode == 2) slock_test();
+			else if (mode == 3) xlock_test();
+			else if (mode == 4) mlock_test();
+			else if (mode == 5) deadlock_test();
+
 			break;
 
 		case 't':
@@ -279,25 +275,33 @@ int main() {
 
 		case 'C':
 			scanf("%d", &table_id);
+
 			result = close_table(table_id);
+
 			if (result == 0) printf("Close is completed\n");
-			else if (result == 1) printf("File having table_id[%d] is not exist\nClose fault\n", table_id);
+			else if (result == 1) printf("File having table_id[%d] does not exist\nClose fault\n", table_id);
 			else printf("Close fault\n");
+
 			break;
 
 		case 'S':
 			result = shutdown_db();
+
 			if (result == 0) printf("Shutdown is completed\n");
-			else if (result == 1) printf("Buffer is not exist\nShutdown is completed\n");
+			else if (result == 1) printf("Buffer does not exist\nShutdown is completed\n");
 			else printf("Shutdown fault\n");
+
 			break;
 
 		case 'Q':
 			while (getchar() != (int)'\n');
+
 			result = shutdown_db();
+
 			if (result == 0) printf("Shutdown is completed\n");
-			else if (result == 1) printf("Buffer is not exist\nShutdown is completed\n");
+			else if (result == 1) printf("Buffer does not exist\nShutdown is completed\n");
 			else printf("Shutdown fault\n");
+
 			return EXIT_SUCCESS;
 
 		case 'F':
@@ -316,7 +320,6 @@ int main() {
 
 		while (getchar() != (int)'\n');
 		printf("> ");
-
 	}
 
 	printf("\n");

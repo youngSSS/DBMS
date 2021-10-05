@@ -1,23 +1,19 @@
 #ifndef __FILE_H__
 #define __FILE_H__
 
-#include <sys/types.h>
-#include <cstdlib>
-#include <cstdint>
-#include <cstring>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstdio>
-#include <string>
-
 // Guideline of size
 #define PAGE_SIZE 4096
 #define PAGE_HEADER_SIZE 128
 
+// Page size in use
+#define HEADER_PAGE_SIZE_IN_USE 24
+#define FREE_PAGE_SIZE_IN_USE 8
+#define PAGE_HEADER_SIZE_IN_USE 40
+
 // Reserved size of each page
-#define HEADER_PAGE_RESERVED (PAGE_SIZE - 24)
-#define FREE_PAGE_RESERVED (PAGE_SIZE - 8)
-#define PAGE_HEADER_RESERVED (PAGE_HEADER_SIZE - 40)
+#define HEADER_PAGE_RESERVED (PAGE_SIZE - HEADER_PAGE_SIZE_IN_USE)
+#define FREE_PAGE_RESERVED (PAGE_SIZE - FREE_PAGE_SIZE_IN_USE)
+#define PAGE_HEADER_RESERVED (PAGE_HEADER_SIZE - PAGE_HEADER_SIZE_IN_USE)
 
 // Number of records in each pages
 #define NUM_LEAF_RECORD 31
@@ -30,13 +26,18 @@
 #define DEFAULT_LEAF_ORDER 32
 #define DEFAULT_INTERNAL_ORDER 249
 
+#include <cstdlib>
+#include <cstdint>
+#include <unistd.h>
+#include <fcntl.h>
+#include <cstdio>
+#include <string>
+
 using namespace std;
 
 typedef uint64_t pagenum_t;
 
-
-/* Structure */
-
+/* --------------------- Structure ---------------------- */
 #pragma pack (push, 1)
 
 typedef struct internalRecord {
@@ -75,11 +76,10 @@ typedef struct page {
 		// Leaf page
 		pagenum_t right_sibling_pagenum;
 	};
-
 	union {
-		// Internal page : 248 key-pagenum pairs
+		// Internal page: 248 key-pagenum pairs
 		internalRecord i_records[NUM_INTERNAL_RECORD];
-		// Leaf page : 31 key-value pairs
+		// Leaf page: 31 key-value pairs
 		leafRecord l_records[NUM_LEAF_RECORD];
 	};
 } page;
@@ -93,24 +93,21 @@ typedef struct page_t {
 } page_t;
 
 #pragma pack(pop)
+/* ------------------------------------------------------ */
 
-
-/* ---------- File APIs ---------- */
-
-// Open & Close
-
+// Open
 int file_open(char* pathname);
+
+// Close
 int file_close(int table_id);
 
 // File Modification
-
 pagenum_t file_alloc_page(int table_id);
 void file_free_page(int table_id, pagenum_t pagenum);
 void file_read_page(int table_id, pagenum_t pagenum, page_t* dest);
 void file_write_page(int table_id, pagenum_t pagenum, const page_t* src);
 
-// Help Fuctions
-
+// Help Functions
 page_t* make_free_pages(int table_id, page_t* header_page);
 int get_table_id(string pathname);
 int is_open(int table_id);

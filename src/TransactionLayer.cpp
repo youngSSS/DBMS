@@ -13,9 +13,9 @@ unordered_map<int, int> is_abort;
 // return 0 : Success
 // return 1 : Mutex error
 int init_trx() {
-	if (pthread_mutex_init(&Trx_Global_Latch, NULL) != 0) return 1;
-	if (pthread_mutex_init(&Trx_Table_Latch, NULL) != 0) return 1;
-	if (pthread_mutex_init(&Trx_Abort_Latch, NULL) != 0) return 1;
+	if (pthread_mutex_init(&Trx_Global_Latch, nullptr) != 0) return 1;
+	if (pthread_mutex_init(&Trx_Table_Latch, nullptr) != 0) return 1;
+	if (pthread_mutex_init(&Trx_Abort_Latch, nullptr) != 0) return 1;
 }
 
 // User call
@@ -26,9 +26,9 @@ int trx_begin() {
 	trx_t trx;
 
 	trx.trx_id = ++Global_Trx_Id;
-	trx.next = NULL;
-	trx.tail = NULL;
-	pthread_mutex_init(&trx.trx_latch, NULL);
+	trx.next = nullptr;
+	trx.tail = nullptr;
+	pthread_mutex_init(&trx.trx_latch, nullptr);
 
 	pthread_mutex_lock(&Trx_Abort_Latch);
 	is_abort[trx.trx_id] = 0;
@@ -56,7 +56,7 @@ int trx_commit(int trx_id) {
 
 	lock_lock_latch();
 
-	while (lock_obj != NULL) {
+	while (lock_obj != nullptr) {
 		free_lock_obj = lock_obj;
 		lock_obj = lock_obj->trx_next;
 		lock_release(free_lock_obj, 0);
@@ -114,7 +114,7 @@ void trx_abort(int trx_id) {
 	lock_lock_latch();
 
 	// Release lock from back to forward to do correct undo
-	while (lock_obj != NULL) {
+	while (lock_obj != nullptr) {
 		free_lock_obj = lock_obj;
 		lock_obj = lock_obj->trx_next;
 		lock_release(free_lock_obj, 1);
@@ -154,7 +154,7 @@ unordered_map<int, int> get_wait_for_list(lock_t* lock_obj, unordered_map<int, i
 		 * */
 		if (target_lock_obj->is_waiting == 0 && target_lock_obj->lock_mode == 0) {
 
-			while (target_lock_obj != NULL) {
+			while (target_lock_obj != nullptr) {
 				/* trx1(S) - trx2(S) - trx1(X, lock_obj), skip checking trx1(S)
 				 * because, logic guarantees that trx1 is not waiting for trx1
 				 */
@@ -162,7 +162,7 @@ unordered_map<int, int> get_wait_for_list(lock_t* lock_obj, unordered_map<int, i
 					if (is_visit.find(target_lock_obj->trx_id) == is_visit.end()) {
 						is_visit[target_lock_obj->trx_id] = 1;
 						trx_lock_obj = Trx_Table[target_lock_obj->trx_id].next;
-						while (trx_lock_obj != NULL) {
+						while (trx_lock_obj != nullptr) {
 							if (trx_lock_obj->is_waiting == 1)
 								is_visit = get_wait_for_list(trx_lock_obj, is_visit);
 							trx_lock_obj = trx_lock_obj->trx_next;
@@ -181,7 +181,7 @@ unordered_map<int, int> get_wait_for_list(lock_t* lock_obj, unordered_map<int, i
 			if (is_visit.find(target_lock_obj->trx_id) == is_visit.end()) {
 				is_visit[target_lock_obj->trx_id] = 1;
 				trx_lock_obj = Trx_Table[target_lock_obj->trx_id].next;
-				while (trx_lock_obj != NULL) {
+				while (trx_lock_obj != nullptr) {
 					if (trx_lock_obj->is_waiting == 1)
 						is_visit = get_wait_for_list(trx_lock_obj, is_visit);
 					trx_lock_obj = trx_lock_obj->trx_next;
@@ -199,13 +199,13 @@ unordered_map<int, int> get_wait_for_list(lock_t* lock_obj, unordered_map<int, i
 				target_lock_obj = target_lock_obj->prev;
 			}
 
-			/* Case : wait for lock is working lock */
+			/* Case: wait for lock is working lock */
 			if (target_lock_obj->is_waiting == 0) {
-				while (target_lock_obj != NULL) {
+				while (target_lock_obj != nullptr) {
 					if (is_visit.find(target_lock_obj->trx_id) == is_visit.end()) {
 						is_visit[target_lock_obj->trx_id] = 1;
 						trx_lock_obj = Trx_Table[target_lock_obj->trx_id].next;
-						while (trx_lock_obj != NULL) {
+						while (trx_lock_obj != nullptr) {
 							if (trx_lock_obj->is_waiting == 1)
 								is_visit = get_wait_for_list(trx_lock_obj, is_visit);
 							trx_lock_obj = trx_lock_obj->trx_next;
@@ -216,12 +216,12 @@ unordered_map<int, int> get_wait_for_list(lock_t* lock_obj, unordered_map<int, i
 				}
 			}
 
-				/* Case : wait for lock is X mode waiting lock */
+				/* Case: wait for lock is X mode waiting lock */
 			else {
 				if (is_visit.find(target_lock_obj->trx_id) == is_visit.end()) {
 					is_visit[target_lock_obj->trx_id] = 1;
 					trx_lock_obj = Trx_Table[target_lock_obj->trx_id].next;
-					while (trx_lock_obj != NULL) {
+					while (trx_lock_obj != nullptr) {
 						if (trx_lock_obj->is_waiting == 1)
 							is_visit = get_wait_for_list(trx_lock_obj, is_visit);
 						trx_lock_obj = trx_lock_obj->trx_next;
@@ -236,7 +236,7 @@ unordered_map<int, int> get_wait_for_list(lock_t* lock_obj, unordered_map<int, i
 			if (is_visit.find(target_lock_obj->trx_id) == is_visit.end()) {
 				is_visit[target_lock_obj->trx_id] = 1;
 				trx_lock_obj = Trx_Table[target_lock_obj->trx_id].next;
-				while (trx_lock_obj != NULL) {
+				while (trx_lock_obj != nullptr) {
 					if (trx_lock_obj->is_waiting == 1)
 						is_visit = get_wait_for_list(trx_lock_obj, is_visit);
 					trx_lock_obj = trx_lock_obj->trx_next;
@@ -279,7 +279,7 @@ void trx_linking(lock_t* lock_obj) {
 	int trx_id;
 	trx_id = lock_obj->trx_id;
 
-	if (Trx_Table[trx_id].next == NULL) {
+	if (Trx_Table[trx_id].next == nullptr) {
 		Trx_Table[trx_id].next = lock_obj;
 		Trx_Table[trx_id].tail = lock_obj;
 	}
@@ -317,7 +317,7 @@ void trx_cut_linking(lock_t* lock_obj) {
 
 	else if (Trx_Table[trx_id].next == lock_obj && Trx_Table[trx_id].tail != lock_obj) {
 		Trx_Table[trx_id].next = lock_obj->trx_next;
-		Trx_Table[trx_id].next->trx_prev = NULL;
+		Trx_Table[trx_id].next->trx_prev = nullptr;
 	}
 
 	else if (Trx_Table[trx_id].next != lock_obj && Trx_Table[trx_id].tail == lock_obj) {
@@ -386,14 +386,14 @@ void print_Trx_Table() {
 	lock_t* lock_obj;
 	unordered_map<int, trx_t>::iterator iter1;
 	int flag = 0;
-	trx_t* temp = NULL, * temp2;
+	trx_t* temp = nullptr, * temp2;
 
 	printf("Print Trx Table, Thread id : %u\n", pthread_self());
 	for (iter1 = Trx_Table.begin(); iter1 != Trx_Table.end(); iter1++) {
 		printf("Trx %d (%p) - ", iter1->first, &iter1);
 		lock_obj = iter1->second.next;
 
-		while (lock_obj != NULL) {
+		while (lock_obj != nullptr) {
 			printf("(Table_id : %d, key : %d) -> ", lock_obj->sentinel->table_id, lock_obj->sentinel->key);
 			lock_obj = lock_obj->trx_next;
 		}

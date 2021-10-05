@@ -49,7 +49,7 @@ int open_table(char* pathname) {
 
 
 // return 0 : insert success
-// return 1 : file having table_id is not exist
+// return 1 : file having table_id does not exist
 // return 2 : duplicate key
 
 int db_insert(int table_id, int64_t key, char* value) {
@@ -87,7 +87,7 @@ int db_find(int table_id, int64_t key, char* ret_val, int trx_id) {
 
 	result = trx_find(table_id, key, ret_val, trx_id);
 
-	/* Case : Abort */
+	// Case: Abort
 	if (result == 2) {
 //        printf("db_api - abort\n");
 		trx_abort(trx_id);
@@ -105,7 +105,7 @@ int db_find(int table_id, int64_t key, char* ret_val, int trx_id) {
 
 
 // return 0 : delete success
-// return 1 : file having table_id is not exist
+// return 1 : file having table_id does not exist
 // return 2 : no key
 
 int db_delete(int table_id, int64_t key) {
@@ -137,7 +137,7 @@ int db_update(int table_id, int64_t key, char* values, int trx_id) {
 
 	result = trx_update(table_id, key, values, trx_id);
 
-	/* Case : Abort */
+	// Case: Abort
 	if (result == 2) {
 		trx_abort(trx_id);
 		return 1;
@@ -153,7 +153,7 @@ int db_update(int table_id, int64_t key, char* values, int trx_id) {
 
 
 // return 0 : close success
-// return 1 : file having table_id is not exist
+// return 1 : file having table_id does not exist
 
 int close_table(int table_id) {
 	int result;
@@ -169,7 +169,7 @@ int close_table(int table_id) {
 
 // return 0 : shutdown success
 
-int shutdown_db(void) {
+int shutdown_db() {
 	return index_shutdown_db();
 }
 
