@@ -18,7 +18,7 @@
 
 ## Lock Layer
   - Design of the Lock Layer to support CONCURRENCY CONTROL
-  - Mutex and condition variable are used to implement a locking mechanism
+  - Locking mechanism is implemented with S2PL and Deadlock Detection
   - WIKI: **[4. Lock Layer Design](https://github.com/youngSSS/DBMS/wiki/4.-Lock-Layer-Design)**
 
 ## Transaction Layer
@@ -28,4 +28,4 @@
 
 ## Recovery Layer
   - Design of the Recovery Layer to support RECOVERY
-  - WIKI: **[06_Recovery](https://github.com/youngSSS/DBMS-original/wiki/06_Recovery)**
+  - WIKI: **[6. Recovery Layer Design](https://github.com/youngSSS/DBMS/wiki/6.-Recovery-Layer-Design)**
