@@ -4,7 +4,7 @@
 ## Disk & Index Layer
   - Design of the Disk Layer & Index Layer to improve the speed of data access
   - B+ Tree is used as database index structure
-  - WIKI: **[02_On Disk B Tree Design](https://github.com/youngSSS/DBMS-original/wiki/02_On-Disk-B--Tree-Design)**
+  - WIKI: **[1. Disk & Index Layer Design](https://github.com/youngSSS/DBMS/wiki/1.-Disk-&-Index-Layer-Design)**
   
 ## Buffer Layer
   - Design of the Buffer Layer to reduce disk I/O
