@@ -14,7 +14,7 @@
 ## Buffer Layer
   - Design of the Buffer Layer to reduce disk I/O
   - LRU Policy and Mutex are used to implement buffer
-  - WIKI: **[03_Buffer Design](https://github.com/youngSSS/DBMS-original/wiki/03_Buffer-Design)**
+  - WIKI: **[3. Buffer Layer Design](https://github.com/youngSSS/DBMS/wiki/3.-Buffer-Layer-Design)**
 
 ## Lock Layer
   - Design of the Lock Layer to support CONCURRENCY CONTROL
