@@ -1,33 +1,31 @@
-# Disk-based B+ Tree Database Management System
-### For more details, check the WIKIs
+# Database Management System
+### For more details, please check the WIKI
 
-### project 1
+## B+ Tree
   - B+ Tree Analysis
-  - Analysis the B+ Tree to convert In-Memory B+ Tree to On-Disk B+ Tree
+  - Analysis of the B+ Tree to implement the Disk-based B+ Tree
   - WIKI : **[01_Analysis B Tree](https://github.com/youngSSS/DBMS-original/wiki/01_Analysis-B--Tree)**
 
-### project 2
-  - Index Manager & File Manager Implementation
-  - Design of Index Manager & File Manager to support fast data access
-  - Convert In-Memory B+ Tree to On-Disk B+ Tree
-  - WIKI : **[02_On Disk B Tree Design](https://github.com/youngSSS/DBMS-original/wiki/02_On-Disk-B--Tree-Design)**
+## Disk Layer & Index Layer
+  - Design of the Disk Layer & Index Layer to improve data access
+  - B+ Tree is used as database index structure
+  - WIKI: **[02_On Disk B Tree Design](https://github.com/youngSSS/DBMS-original/wiki/02_On-Disk-B--Tree-Design)**
   
-### project 3
-  - Buffer Manager Implementation
-  - Design of Buffer Manager to reduce disk I/O
-  - WIKI : **[03_Buffer Design](https://github.com/youngSSS/DBMS-original/wiki/03_Buffer-Design)**
+## Buffer Layer
+  - Design of the Buffer Layer to reduce disk I/O
+  - LRU Policy and Mutex are used to implement buffer
+  - WIKI: **[03_Buffer Design](https://github.com/youngSSS/DBMS-original/wiki/03_Buffer-Design)**
 
-### project 4
-  - Lock Module Implementaion
-  - Design of LOCK MODULE for project 5
-  - WIKI : **[04_Block Module Design](https://github.com/youngSSS/DBMS-original/wiki/04_Block-Module-Design)**
+## Lock Layer
+  - Design of the Lock Layer to support CONCURRENCY CONTROL
+  - Mutex and condition variable are used to implement a locking mechanism
+  - WIKI: **[4. Lock Layer Design](https://github.com/youngSSS/DBMS/wiki/4.-Lock-Layer-Design)**
 
-### project 5
-  - Lock Manager & Transaction Manager Implementation
-  - Design of Lock Manager & Transaction Manager to support CONCURRENCY CONTROL
-  - WIKI : **[05_Lock & Transaction Design](https://github.com/youngSSS/DBMS-original/wiki/05_Lock-&-Transaction-Design)**
+## Transaction Layer
+  - Design of the Transaction Layer to support CONCURRENCY CONTROL
+  - Detect deadlock and maintain the transaction table
+  - WIKI: **[5. Transaction Layer Design](https://github.com/youngSSS/DBMS/wiki/5.-Transaction-Layer-Design)**
 
-### project 6
-  - Log Manager Implementation
-  - Design of Log Manager to support RECOVERY
-  - WIKI : **[06_Recovery](https://github.com/youngSSS/DBMS-original/wiki/06_Recovery)**
+## Recovery Layer
+  - Design of the Recovery Layer to support RECOVERY
+  - WIKI: **[06_Recovery](https://github.com/youngSSS/DBMS-original/wiki/06_Recovery)**
